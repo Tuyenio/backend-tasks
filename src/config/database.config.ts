@@ -11,10 +11,10 @@ export const getDatabaseConfig = (
   password: configService.get<string>('DB_PASSWORD'),
   database: configService.get<string>('DB_NAME'),
   schema: configService.get<string>('DB_SCHEMA', 'public'),
-  entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+  entities: [__dirname + '/../entities/*.entity{.ts,.js}'],
   migrations: [__dirname + '/../database/migrations/*{.ts,.js}'],
-  synchronize: false, // Luôn set false trong production, dùng migrations
-  migrationsRun: true, // Tự động chạy migrations khi start app
+  synchronize: false,
+  migrationsRun: true,
   logging: configService.get<string>('NODE_ENV') === 'development',
   ssl: configService.get<string>('DB_SSL') === 'true' ? { rejectUnauthorized: false } : false,
 });

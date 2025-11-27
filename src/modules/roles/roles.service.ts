@@ -1,0 +1,93 @@
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Role } from '../../entities/role.entity';
+import { CreateRoleDto } from './dto/create-role.dto';
+import { UpdateRoleDto } from './dto/update-role.dto';
+
+@Injectable()
+export class RolesService {
+  constructor(
+    @InjectRepository(Role)
+    private rolesRepository: Repository<Role>,
+  ) {}
+
+  async findAll(): Promise<Role[]> {
+    return this.rolesRepository.find({
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findOne(id: string): Promise<Role> {
+    const role = await this.rolesRepository.findOne({ 
+      where: { id },
+      relations: ['users'],
+    });
+    
+    if (!role) {
+      throw new NotFoundException(`Role with ID ${id} not found`);
+    }
+    
+    return role;
+  }
+
+  async findByName(name: string): Promise<Role | null> {
+    return this.rolesRepository.findOne({ where: { name } });
+  }
+
+  async create(createRoleDto: CreateRoleDto): Promise<Role> {
+    // Check if role name already exists
+    const existingRole = await this.findByName(createRoleDto.name);
+    if (existingRole) {
+      throw new ConflictException(`Role with name ${createRoleDto.name} already exists`);
+    }
+
+    const role = this.rolesRepository.create({
+      ...createRoleDto,
+      isSystem: false, // Custom roles are never system roles
+    });
+    
+    return this.rolesRepository.save(role);
+  }
+
+  async update(id: string, updateRoleDto: UpdateRoleDto): Promise<Role> {
+    const role = await this.findOne(id);
+
+    // Prevent modifying system roles
+    if (role.isSystem) {
+      throw new ConflictException('Cannot modify system roles');
+    }
+
+    // Check name conflict if name is being changed
+    if (updateRoleDto.name && updateRoleDto.name !== role.name) {
+      const existingRole = await this.findByName(updateRoleDto.name);
+      if (existingRole) {
+        throw new ConflictException(`Role with name ${updateRoleDto.name} already exists`);
+      }
+    }
+
+    Object.assign(role, updateRoleDto);
+    return this.rolesRepository.save(role);
+  }
+
+  async remove(id: string): Promise<void> {
+    const role = await this.findOne(id);
+
+    // Prevent deleting system roles
+    if (role.isSystem) {
+      throw new ConflictException('Cannot delete system roles');
+    }
+
+    await this.rolesRepository.remove(role);
+  }
+
+  async getPermissions(roleId: string): Promise<string[]> {
+    const role = await this.findOne(roleId);
+    return role.permissions;
+  }
+
+  async hasPermission(roleId: string, permission: string): Promise<boolean> {
+    const permissions = await this.getPermissions(roleId);
+    return permissions.includes(permission);
+  }
+}

@@ -5,7 +5,16 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
+import { Exclude } from 'class-transformer';
+
+export enum UserStatus {
+  ONLINE = 'online',
+  OFFLINE = 'offline',
+  AWAY = 'away',
+}
 
 @Entity('users')
 export class User {
@@ -17,25 +26,68 @@ export class User {
   email: string;
 
   @Column({ type: 'varchar', length: 255 })
+  @Exclude()
   password: string;
 
-  @Column({ type: 'varchar', length: 100 })
-  firstName: string;
-
-  @Column({ type: 'varchar', length: 100 })
-  lastName: string;
+  @Column({ type: 'varchar', length: 255 })
+  name: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  avatar: string;
+  avatarUrl: string;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
-  mobile: string;
+  phone: string;
+
+  @Column({ type: 'text', nullable: true })
+  bio: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  department: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  jobRole: string;
+
+  @Column({
+    type: 'enum',
+    enum: UserStatus,
+    default: UserStatus.OFFLINE,
+  })
+  status: UserStatus;
 
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
-  @Column({ type: 'varchar', length: 50, default: 'user' })
-  role: string;
+  @Column({ type: 'boolean', default: false })
+  emailVerified: boolean;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Exclude()
+  verificationToken: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Exclude()
+  resetPasswordToken: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  resetPasswordExpires: Date | null;
+
+  @Column({ type: 'boolean', default: false })
+  twoFactorEnabled: boolean;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Exclude()
+  twoFactorSecret: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  lastLoginAt: Date;
+
+  @ManyToMany('Role', 'users')
+  @JoinTable({
+    name: 'user_roles',
+    joinColumn: { name: 'user_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
+  })
+  roles: any[];
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

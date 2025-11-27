@@ -1,0 +1,47 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Query,
+  Body,
+  UseGuards,
+  Request,
+  Res,
+} from '@nestjs/common';
+import type { Response } from 'express';
+import { ReportsService } from './reports.service';
+import { GenerateReportDto } from './dto/generate-report.dto';
+import { GetChartDataDto } from './dto/get-chart-data.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
+@Controller('reports')
+@UseGuards(JwtAuthGuard)
+export class ReportsController {
+  constructor(private readonly reportsService: ReportsService) {}
+
+  @Post('generate')
+  async generateReport(@Body() dto: GenerateReportDto, @Res() res: Response) {
+    const report = await this.reportsService.generateReport(dto);
+
+    if (dto.format === 'csv' && 'content' in report && report.content) {
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${report.filename}"`,
+      );
+      return res.send(report.content);
+    }
+
+    return res.json(report);
+  }
+
+  @Get('charts')
+  async getChartData(@Query() dto: GetChartDataDto) {
+    return this.reportsService.getChartData(dto);
+  }
+
+  @Get('statistics')
+  async getOverallStatistics() {
+    return this.reportsService.getOverallStatistics();
+  }
+}

@@ -1,0 +1,31 @@
+-- Drop all tables and recreate database
+-- WARNING: This will delete all data!
+
+-- Drop all tables
+DROP TABLE IF EXISTS "system_settings" CASCADE;
+DROP TABLE IF EXISTS "custom_themes" CASCADE;
+DROP TABLE IF EXISTS "activity_logs" CASCADE;
+DROP TABLE IF EXISTS "notifications" CASCADE;
+DROP TABLE IF EXISTS "message_read_status" CASCADE;
+DROP TABLE IF EXISTS "messages" CASCADE;
+DROP TABLE IF EXISTS "chat_members" CASCADE;
+DROP TABLE IF EXISTS "chats" CASCADE;
+DROP TABLE IF EXISTS "note_shared_with" CASCADE;
+DROP TABLE IF EXISTS "notes" CASCADE;
+DROP TABLE IF EXISTS "comment_reactions" CASCADE;
+DROP TABLE IF EXISTS "task_comments" CASCADE;
+DROP TABLE IF EXISTS "attachments" CASCADE;
+DROP TABLE IF EXISTS "task_checklist_items" CASCADE;
+DROP TABLE IF EXISTS "task_reminders" CASCADE;
+DROP TABLE IF EXISTS "task_tags" CASCADE;
+DROP TABLE IF EXISTS "task_assignees" CASCADE;
+DROP TABLE IF EXISTS "tasks" CASCADE;
+DROP TABLE IF EXISTS "project_tags" CASCADE;
+DROP TABLE IF EXISTS "project_members" CASCADE;
+DROP TABLE IF EXISTS "projects" CASCADE;
+DROP TABLE IF EXISTS "tags" CASCADE;
+DROP TABLE IF EXISTS "user_sessions" CASCADE;
+DROP TABLE IF EXISTS "user_roles" CASCADE;
+DROP TABLE IF EXISTS "roles" CASCADE;
+DROP TABLE IF EXISTS "users" CASCADE;
+DROP TABLE IF EXISTS "migrations" CASCADE;
