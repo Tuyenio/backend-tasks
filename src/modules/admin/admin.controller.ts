@@ -15,24 +15,18 @@ import { AdminService } from './admin.service';
 import { UpdateSystemSettingDto } from './dto/update-system-setting.dto';
 import { QueryActivityLogDto } from './dto/query-activity-log.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../../common/guards/permissions.guard';
+import { RequirePermissions } from '../../common/decorators/permissions.decorator';
 
 @Controller('admin')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
-  private checkAdminPermission(user: any) {
-    if (!user.roles || !user.roles.some((role: any) => 
-      ['super_admin', 'admin'].includes(role.name)
-    )) {
-      throw new ForbiddenException('Admin access required');
-    }
-  }
-
   // System Settings
   @Get('settings')
-  async getAllSettings(@Request() req) {
-    this.checkAdminPermission(req.user);
+  @RequirePermissions('settings.manage')
+  async getAllSettings() {
     return this.adminService.getAllSettings();
   }
 
@@ -42,34 +36,30 @@ export class AdminController {
   }
 
   @Get('settings/:key')
-  async getSetting(@Param('key') key: string, @Request() req) {
-    this.checkAdminPermission(req.user);
+  @RequirePermissions('settings.view')
+  async getSetting(@Param('key') key: string) {
     return this.adminService.getSetting(key);
   }
 
   @Patch('settings/:key')
+  @RequirePermissions('settings.manage')
   async updateSetting(
     @Param('key') key: string,
     @Body() updateDto: UpdateSystemSettingDto,
-    @Request() req,
   ) {
-    this.checkAdminPermission(req.user);
     return this.adminService.updateSetting(key, updateDto);
   }
 
   // Activity Logs
   @Get('activity-logs')
-  async getActivityLogs(@Query() query: QueryActivityLogDto, @Request() req) {
-    this.checkAdminPermission(req.user);
+  @RequirePermissions('settings.manage')
+  async getActivityLogs(@Query() query: QueryActivityLogDto) {
     return this.adminService.getActivityLogs(query);
   }
 
   @Delete('activity-logs/cleanup')
-  async clearOldActivityLogs(
-    @Query('days') days: string = '90',
-    @Request() req,
-  ) {
-    this.checkAdminPermission(req.user);
+  @RequirePermissions('settings.manage')
+  async clearOldActivityLogs(@Query('days') days: string = '90') {
     const deletedCount = await this.adminService.clearOldActivityLogs(
       parseInt(days),
     );
@@ -78,49 +68,71 @@ export class AdminController {
 
   // Dashboard & Statistics
   @Get('dashboard/stats')
-  async getDashboardStats(@Request() req) {
-    this.checkAdminPermission(req.user);
+  @RequirePermissions('settings.view')
+  async getDashboardStats() {
     return this.adminService.getDashboardStats();
   }
 
   @Get('dashboard/user-activity')
-  async getUserActivityStats(
-    @Query('days') days: string = '30',
-    @Request() req,
-  ) {
-    this.checkAdminPermission(req.user);
+  @RequirePermissions('settings.view')
+  async getUserActivityStats(@Query('days') days: string = '30') {
     return this.adminService.getUserActivityStats(parseInt(days));
   }
 
   @Get('dashboard/recent-activity')
-  async getRecentActivity(
-    @Query('limit') limit: string = '20',
-    @Request() req,
-  ) {
-    this.checkAdminPermission(req.user);
+  @RequirePermissions('settings.view')
+  async getRecentActivity(@Query('limit') limit: string = '20') {
     return this.adminService.getRecentActivity(parseInt(limit));
   }
 
   @Get('dashboard/top-users')
-  async getTopUsers(
-    @Query('limit') limit: string = '10',
-    @Request() req,
-  ) {
-    this.checkAdminPermission(req.user);
+  @RequirePermissions('settings.view')
+  async getTopUsers(@Query('limit') limit: string = '10') {
     return this.adminService.getTopUsers(parseInt(limit));
   }
 
   // System Health
   @Get('health')
-  async getSystemHealth(@Request() req) {
-    this.checkAdminPermission(req.user);
+  @RequirePermissions('settings.view')
+  async getSystemHealth() {
     return this.adminService.getSystemHealth();
   }
 
   // Database Maintenance
   @Post('maintenance/cleanup')
-  async performDatabaseCleanup(@Request() req) {
-    this.checkAdminPermission(req.user);
+  @RequirePermissions('settings.manage')
+  async performDatabaseCleanup() {
     return this.adminService.performDatabaseCleanup();
+  }
+
+  // User Management
+  @Get('users')
+  @RequirePermissions('users.manage')
+  async getAllUsers(@Query() query: any) {
+    return this.adminService.getAllUsers(query);
+  }
+
+  @Patch('users/:id/lock')
+  @RequirePermissions('users.manage')
+  async lockUser(@Param('id') id: string) {
+    const user = await this.adminService.lockUser(id);
+    const { password, ...result } = user;
+    return result;
+  }
+
+  @Patch('users/:id/unlock')
+  @RequirePermissions('users.manage')
+  async unlockUser(@Param('id') id: string) {
+    const user = await this.adminService.unlockUser(id);
+    const { password, ...result } = user;
+    return result;
+  }
+
+  @Patch('users/:id/roles')
+  @RequirePermissions('users.manage')
+  async assignRoles(@Param('id') id: string, @Body('roleIds') roleIds: string[]) {
+    const user = await this.adminService.assignRolesToUser(id, roleIds);
+    const { password, ...result } = user;
+    return result;
   }
 }

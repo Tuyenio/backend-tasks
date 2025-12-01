@@ -14,41 +14,57 @@ import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../../common/guards/permissions.guard';
+import { RequirePermissions } from '../../common/decorators/permissions.decorator';
 
 @Controller('roles')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
+  @Get()
+  @RequirePermissions('roles.view')
+  findAll() {
+    return this.rolesService.findAll();
+  }
+
+  @Get('permissions')
+  @RequirePermissions('roles.view')
+  getAvailablePermissions() {
+    return {
+      permissions: this.rolesService.getAvailablePermissions(),
+    };
+  }
+
+  @Get(':id')
+  @RequirePermissions('roles.view')
+  findOne(@Param('id') id: string) {
+    return this.rolesService.findOne(id);
+  }
+
   @Post()
+  @RequirePermissions('roles.create')
   @HttpCode(HttpStatus.CREATED)
   create(@Body() createRoleDto: CreateRoleDto) {
     return this.rolesService.create(createRoleDto);
   }
 
-  @Get()
-  findAll() {
-    return this.rolesService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.rolesService.findOne(id);
-  }
-
-  @Get(':id/permissions')
-  getPermissions(@Param('id') id: string) {
-    return this.rolesService.getPermissions(id);
-  }
-
   @Patch(':id')
+  @RequirePermissions('roles.manage')
   update(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto) {
     return this.rolesService.update(id, updateRoleDto);
   }
 
+  @Patch(':id/permissions')
+  @RequirePermissions('roles.manage')
+  updatePermissions(@Param('id') id: string, @Body('permissions') permissions: string[]) {
+    return this.rolesService.updatePermissions(id, permissions);
+  }
+
   @Delete(':id')
+  @RequirePermissions('roles.delete')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id') id: string) {
-    return this.rolesService.remove(id);
+  async remove(@Param('id') id: string) {
+    await this.rolesService.remove(id);
   }
 }

@@ -58,6 +58,9 @@ export class User {
   isActive: boolean;
 
   @Column({ type: 'boolean', default: false })
+  isLocked: boolean;
+
+  @Column({ type: 'boolean', default: false })
   emailVerified: boolean;
 
   @Column({ type: 'varchar', length: 255, nullable: true })

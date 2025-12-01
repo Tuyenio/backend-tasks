@@ -2,12 +2,14 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, MoreThan } from 'typeorm';
 import { SystemSetting } from '../../entities/system-setting.entity';
 import { ActivityLog } from '../../entities/activity-log.entity';
 import { User } from '../../entities/user.entity';
+import { Role } from '../../entities/role.entity';
 import { Project, ProjectStatus } from '../../entities/project.entity';
 import { Task, TaskStatus } from '../../entities/task.entity';
 import { Note } from '../../entities/note.entity';
@@ -25,6 +27,8 @@ export class AdminService {
     private activityLogsRepository: Repository<ActivityLog>,
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    @InjectRepository(Role)
+    private rolesRepository: Repository<Role>,
     @InjectRepository(Project)
     private projectsRepository: Repository<Project>,
     @InjectRepository(Task)
@@ -310,5 +314,98 @@ export class AdminService {
       deletedSessions: deletedSessions[1] || 0,
       deletedNotifications: deletedNotifications.affected || 0,
     };
+  }
+
+  // User Management
+  async getAllUsers(query?: { status?: string; role?: string; search?: string; page?: number; limit?: number }) {
+    const { status, role, search, page = 1, limit = 20 } = query || {};
+    
+    const qb = this.usersRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.roles', 'role');
+
+    if (status === 'locked') {
+      qb.andWhere('user.isLocked = true');
+    } else if (status === 'active') {
+      qb.andWhere('user.isActive = true AND user.isLocked = false');
+    } else if (status === 'inactive') {
+      qb.andWhere('user.isActive = false');
+    }
+
+    if (role) {
+      qb.andWhere('role.name = :roleName', { roleName: role });
+    }
+
+    if (search) {
+      qb.andWhere('(user.name ILIKE :search OR user.email ILIKE :search)', {
+        search: `%${search}%`,
+      });
+    }
+
+    qb.orderBy('user.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const [items, total] = await qb.getManyAndCount();
+
+    // Remove sensitive data
+    const users = items.map(({ password, verificationToken, resetPasswordToken, resetPasswordExpires, ...user }) => user);
+
+    return {
+      items: users,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async lockUser(userId: string): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id: userId }, relations: ['roles'] });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Cannot lock super_admin
+    const isSuperAdmin = user.roles?.some(role => role.name === 'super_admin');
+    if (isSuperAdmin) {
+      throw new BadRequestException('Cannot lock super admin account');
+    }
+
+    user.isLocked = true;
+    return this.usersRepository.save(user);
+  }
+
+  async unlockUser(userId: string): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    user.isLocked = false;
+    return this.usersRepository.save(user);
+  }
+
+  async assignRolesToUser(userId: string, roleIds: string[]): Promise<User> {
+    const user = await this.usersRepository.findOne({ 
+      where: { id: userId },
+      relations: ['roles'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Fetch roles
+    const roles = await this.rolesRepository.findByIds(roleIds);
+
+    if (roles.length !== roleIds.length) {
+      throw new NotFoundException('One or more roles not found');
+    }
+
+    user.roles = roles;
+    return this.usersRepository.save(user);
   }
 }

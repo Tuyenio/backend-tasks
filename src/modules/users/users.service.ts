@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, In } from 'typeorm';
 import { User } from '../../entities/user.entity';
 import { Role } from '../../entities/role.entity';
+import { UserSettings } from '../../entities/user-settings.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
@@ -15,6 +16,8 @@ export class UsersService {
     private usersRepository: Repository<User>,
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
+    @InjectRepository(UserSettings)
+    private userSettingsRepository: Repository<UserSettings>,
   ) {}
 
   async findAll(query: QueryUserDto): Promise<{ data: User[]; total: number; page: number; limit: number }> {
@@ -212,5 +215,48 @@ export class UsersService {
       online,
       byDepartment,
     };
+  }
+
+  async updateAvatar(userId: string, avatarUrl: string): Promise<User> {
+    const user = await this.findOne(userId);
+    user.avatarUrl = avatarUrl;
+    return this.usersRepository.save(user);
+  }
+
+  async getUserSettings(userId: string): Promise<UserSettings> {
+    let settings = await this.userSettingsRepository.findOne({ 
+      where: { user: { id: userId } },
+      relations: ['user', 'theme'],
+    });
+
+    if (!settings) {
+      // Create default settings if not exists
+      const user = await this.findOne(userId);
+      settings = this.userSettingsRepository.create({
+        user,
+        language: 'vi',
+        timezone: 'Asia/Ho_Chi_Minh',
+        dateFormat: 'DD/MM/YYYY',
+        timeFormat: '24h',
+        emailNotifications: true,
+        pushNotifications: true,
+        soundEnabled: true,
+      });
+      await this.userSettingsRepository.save(settings);
+    }
+
+    return settings;
+  }
+
+  async updateUserSettings(userId: string, settingsData: Partial<UserSettings>): Promise<UserSettings> {
+    const settings = await this.getUserSettings(userId);
+    Object.assign(settings, settingsData);
+    return this.userSettingsRepository.save(settings);
+  }
+
+  async updateProfile(userId: string, updateData: { name?: string; phone?: string; bio?: string; department?: string; jobRole?: string }): Promise<User> {
+    const user = await this.findOne(userId);
+    Object.assign(user, updateData);
+    return this.usersRepository.save(user);
   }
 }

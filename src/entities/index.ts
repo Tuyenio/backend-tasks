@@ -31,3 +31,7 @@ export * from './notification.entity';
 export * from './activity-log.entity';
 export * from './custom-theme.entity';
 export * from './system-setting.entity';
+
+// Settings & Theme
+export * from './user-settings.entity';
+export * from './theme.entity';

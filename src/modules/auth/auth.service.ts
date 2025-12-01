@@ -9,7 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { User } from '../../entities/user.entity';
+import { User, UserStatus } from '../../entities/user.entity';
 import { Role } from '../../entities/role.entity';
 import {
   RegisterDto,
@@ -29,6 +29,58 @@ export class AuthService {
     private rolesRepository: Repository<Role>,
     private jwtService: JwtService,
   ) {}
+
+  /**
+   * Aggregate all permissions from user's roles
+   * Super admin gets all permissions automatically
+   */
+  private aggregatePermissions(roles: Role[]): string[] {
+    const permissionsSet = new Set<string>();
+
+    for (const role of roles) {
+      // Super admin has all permissions
+      if (role.name === 'super_admin') {
+        return [
+          'projects.create', 'projects.update', 'projects.delete', 'projects.view',
+          'tasks.create', 'tasks.update', 'tasks.delete', 'tasks.view', 'tasks.assign', 'tasks.complete',
+          'notes.create', 'notes.update', 'notes.delete', 'notes.view',
+          'chat.create', 'chat.send', 'chat.delete',
+          'reports.view', 'reports.export', 'reports.create',
+          'users.view', 'users.manage', 'users.invite',
+          'roles.view', 'roles.manage', 'roles.create', 'roles.delete',
+          'settings.view', 'settings.manage',
+          'team.view', 'team.manage',
+        ];
+      }
+
+      // Add permissions from role
+      if (role.permissions && Array.isArray(role.permissions)) {
+        role.permissions.forEach(permission => permissionsSet.add(permission));
+      }
+    }
+
+    return Array.from(permissionsSet);
+  }
+
+  /**
+   * Format user object for frontend
+   */
+  private formatUserResponse(user: User) {
+    const { password, verificationToken, resetPasswordToken, resetPasswordExpires, ...userWithoutSensitiveData } = user;
+
+    // Extract role names
+    const roleNames = user.roles?.map(role => role.name) || [];
+
+    // Aggregate permissions
+    const permissions = this.aggregatePermissions(user.roles || []);
+
+    return {
+      ...userWithoutSensitiveData,
+      roles: roleNames,
+      permissions,
+      avatarUrl: user.avatarUrl || null,
+    };
+  }
 
   async register(registerDto: RegisterDto) {
     const { email, password, name, phone } = registerDto;
@@ -72,10 +124,9 @@ export class AuthService {
 
     // TODO: Send verification email
 
-    const { password: _, verificationToken: __, ...result } = user;
     return {
       message: 'Registration successful. Please check your email to verify your account.',
-      user: result,
+      user: this.formatUserResponse(user),
     };
   }
 
@@ -104,19 +155,26 @@ export class AuthService {
       throw new UnauthorizedException('Account is deactivated');
     }
 
-    // Update last login
+    // Check if user is locked
+    if (user.isLocked) {
+      throw new UnauthorizedException('Account has been locked. Please contact administrator.');
+    }
+
+    // Update last login and status
     user.lastLoginAt = new Date();
+    user.status = UserStatus.ONLINE;
     await this.usersRepository.save(user);
 
     // Generate JWT token
     const payload = { sub: user.id, email: user.email };
     const accessToken = this.jwtService.sign(payload);
 
-    const { password: _, ...userWithoutPassword } = user;
+    // Format user response with permissions
+    const formattedUser = this.formatUserResponse(user);
 
     return {
       accessToken,
-      user: userWithoutPassword,
+      user: formattedUser,
     };
   }
 
@@ -237,8 +295,12 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
-    const { password, ...result } = user;
-    return result;
+    // Check if user is locked
+    if (user.isLocked) {
+      throw new UnauthorizedException('Account has been locked');
+    }
+
+    return this.formatUserResponse(user);
   }
 
   async refreshToken(userId: string) {

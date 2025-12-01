@@ -17,30 +17,33 @@ import { CreateMessageDto } from './dto/create-message.dto';
 import { QueryChatDto } from './dto/query-chat.dto';
 import { QueryMessageDto } from './dto/query-message.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../../common/guards/permissions.guard';
+import { RequirePermissions } from '../../common/decorators/permissions.decorator';
 
 @Controller('chats')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
   @Post()
+  @RequirePermissions('chat.create')
   create(@Body() createChatDto: CreateChatDto, @Request() req) {
-    return this.chatService.create(createChatDto, req.user.userId);
+    return this.chatService.create(createChatDto, req.user.id);
   }
 
   @Get()
   findAll(@Query() query: QueryChatDto, @Request() req) {
-    return this.chatService.findAll(query, req.user.userId);
+    return this.chatService.findAll(query, req.user.id);
   }
 
   @Get('unread-count')
   getUnreadCount(@Request() req) {
-    return this.chatService.getUnreadCount(req.user.userId);
+    return this.chatService.getUnreadCount(req.user.id);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string, @Request() req) {
-    return this.chatService.findOne(id, req.user.userId);
+    return this.chatService.findOne(id, req.user.id);
   }
 
   @Patch(':id')
@@ -49,12 +52,12 @@ export class ChatController {
     @Body() updateChatDto: UpdateChatDto,
     @Request() req,
   ) {
-    return this.chatService.update(id, updateChatDto, req.user.userId);
+    return this.chatService.update(id, updateChatDto, req.user.id);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string, @Request() req) {
-    return this.chatService.remove(id, req.user.userId);
+    return this.chatService.remove(id, req.user.id);
   }
 
   @Post(':id/participants')
@@ -66,7 +69,7 @@ export class ChatController {
     return this.chatService.addParticipants(
       id,
       body.participantIds,
-      req.user.userId,
+      req.user.id,
     );
   }
 
@@ -76,21 +79,21 @@ export class ChatController {
     @Param('participantId') participantId: string,
     @Request() req,
   ) {
-    return this.chatService.removeParticipant(id, participantId, req.user.userId);
+    return this.chatService.removeParticipant(id, participantId, req.user.id);
   }
 
   @Post('messages')
   createMessage(@Body() createMessageDto: CreateMessageDto, @Request() req) {
-    return this.chatService.createMessage(createMessageDto, req.user.userId);
+    return this.chatService.createMessage(createMessageDto, req.user.id);
   }
 
   @Get('messages/list')
   getMessages(@Query() query: QueryMessageDto, @Request() req) {
-    return this.chatService.getMessages(query, req.user.userId);
+    return this.chatService.getMessages(query, req.user.id);
   }
 
   @Post('messages/:messageId/read')
   markAsRead(@Param('messageId') messageId: string, @Request() req) {
-    return this.chatService.markAsRead(messageId, req.user.userId);
+    return this.chatService.markAsRead(messageId, req.user.id);
   }
 }

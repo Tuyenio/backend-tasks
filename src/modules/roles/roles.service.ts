@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Role } from '../../entities/role.entity';
@@ -53,9 +53,9 @@ export class RolesService {
   async update(id: string, updateRoleDto: UpdateRoleDto): Promise<Role> {
     const role = await this.findOne(id);
 
-    // Prevent modifying system roles
-    if (role.isSystem) {
-      throw new ConflictException('Cannot modify system roles');
+    // System roles can only have their permissions updated
+    if (role.isSystem && (updateRoleDto.name || updateRoleDto.displayName)) {
+      throw new BadRequestException('System roles cannot be renamed');
     }
 
     // Check name conflict if name is being changed
@@ -75,7 +75,14 @@ export class RolesService {
 
     // Prevent deleting system roles
     if (role.isSystem) {
-      throw new ConflictException('Cannot delete system roles');
+      throw new BadRequestException('System roles cannot be deleted');
+    }
+
+    // Check if role has users
+    if (role.users && role.users.length > 0) {
+      throw new BadRequestException(
+        `Cannot delete role '${role.displayName}' because it is assigned to ${role.users.length} user(s)`,
+      );
     }
 
     await this.rolesRepository.remove(role);
@@ -89,5 +96,47 @@ export class RolesService {
   async hasPermission(roleId: string, permission: string): Promise<boolean> {
     const permissions = await this.getPermissions(roleId);
     return permissions.includes(permission);
+  }
+
+  async updatePermissions(id: string, permissions: string[]): Promise<Role> {
+    const role = await this.findOne(id);
+    role.permissions = permissions;
+    return this.rolesRepository.save(role);
+  }
+
+  async getAvailablePermissions(): Promise<string[]> {
+    return [
+      'projects.create',
+      'projects.update',
+      'projects.delete',
+      'projects.view',
+      'tasks.create',
+      'tasks.update',
+      'tasks.delete',
+      'tasks.view',
+      'tasks.assign',
+      'tasks.complete',
+      'notes.create',
+      'notes.update',
+      'notes.delete',
+      'notes.view',
+      'chat.create',
+      'chat.send',
+      'chat.delete',
+      'reports.view',
+      'reports.export',
+      'reports.create',
+      'users.view',
+      'users.manage',
+      'users.invite',
+      'roles.view',
+      'roles.manage',
+      'roles.create',
+      'roles.delete',
+      'settings.view',
+      'settings.manage',
+      'team.view',
+      'team.manage',
+    ];
   }
 }

@@ -15,9 +15,11 @@ import { TagsService } from './tags.service';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../../common/guards/permissions.guard';
+import { RequirePermissions } from '../../common/decorators/permissions.decorator';
 
 @Controller('tags')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class TagsController {
   constructor(private readonly tagsService: TagsService) {}
 
@@ -37,17 +39,20 @@ export class TagsController {
   }
 
   @Post()
+  @RequirePermissions('settings.manage')
   @HttpCode(HttpStatus.CREATED)
   create(@Body() createTagDto: CreateTagDto) {
     return this.tagsService.create(createTagDto);
   }
 
   @Patch(':id')
+  @RequirePermissions('settings.manage')
   update(@Param('id') id: string, @Body() updateTagDto: UpdateTagDto) {
     return this.tagsService.update(id, updateTagDto);
   }
 
   @Delete(':id')
+  @RequirePermissions('settings.manage')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string) {
     return this.tagsService.remove(id);

@@ -5,6 +5,7 @@ import { AdminController } from './admin.controller';
 import { SystemSetting } from '../../entities/system-setting.entity';
 import { ActivityLog } from '../../entities/activity-log.entity';
 import { User } from '../../entities/user.entity';
+import { Role } from '../../entities/role.entity';
 import { Project } from '../../entities/project.entity';
 import { Task } from '../../entities/task.entity';
 import { Note } from '../../entities/note.entity';
@@ -17,6 +18,7 @@ import { Notification } from '../../entities/notification.entity';
       SystemSetting,
       ActivityLog,
       User,
+      Role,
       Project,
       Task,
       Note,

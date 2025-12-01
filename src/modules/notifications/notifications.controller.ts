@@ -74,46 +74,46 @@ export class NotificationsController {
 
   @Get()
   findAll(@Query() query: QueryNotificationDto, @Request() req) {
-    return this.notificationsService.findAll(query, req.user.userId);
+    return this.notificationsService.findAll(query, req.user.id);
   }
 
   @Get('unread-count')
   getUnreadCount(@Request() req) {
-    return this.notificationsService.getUnreadCount(req.user.userId);
+    return this.notificationsService.getUnreadCount(req.user.id);
   }
 
   @Get('statistics')
   getStatistics(@Request() req) {
-    return this.notificationsService.getStatistics(req.user.userId);
+    return this.notificationsService.getStatistics(req.user.id);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string, @Request() req) {
-    return this.notificationsService.findOne(id, req.user.userId);
+    return this.notificationsService.findOne(id, req.user.id);
   }
 
   @Patch(':id/read')
   async markAsRead(@Param('id') id: string, @Request() req) {
     const notification = await this.notificationsService.markAsRead(
       id,
-      req.user.userId,
+      req.user.id,
     );
 
     // Update unread count
     const unreadCount = await this.notificationsService.getUnreadCount(
-      req.user.userId,
+      req.user.id,
     );
-    this.notificationsGateway.notifyUnreadCount(req.user.userId, unreadCount);
+    this.notificationsGateway.notifyUnreadCount(req.user.id, unreadCount);
 
     return notification;
   }
 
   @Patch('read-all')
   async markAllAsRead(@Request() req) {
-    await this.notificationsService.markAllAsRead(req.user.userId);
+    await this.notificationsService.markAllAsRead(req.user.id);
 
     // Update unread count to 0
-    this.notificationsGateway.notifyUnreadCount(req.user.userId, 0);
+    this.notificationsGateway.notifyUnreadCount(req.user.id, 0);
 
     return { message: 'All notifications marked as read' };
   }
@@ -125,37 +125,37 @@ export class NotificationsController {
   ) {
     const notifications = await this.notificationsService.markMultipleAsRead(
       body.ids,
-      req.user.userId,
+      req.user.id,
     );
 
     // Update unread count
     const unreadCount = await this.notificationsService.getUnreadCount(
-      req.user.userId,
+      req.user.id,
     );
-    this.notificationsGateway.notifyUnreadCount(req.user.userId, unreadCount);
+    this.notificationsGateway.notifyUnreadCount(req.user.id, unreadCount);
 
     return notifications;
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string, @Request() req) {
-    await this.notificationsService.remove(id, req.user.userId);
+    await this.notificationsService.remove(id, req.user.id);
 
     // Update unread count
     const unreadCount = await this.notificationsService.getUnreadCount(
-      req.user.userId,
+      req.user.id,
     );
-    this.notificationsGateway.notifyUnreadCount(req.user.userId, unreadCount);
+    this.notificationsGateway.notifyUnreadCount(req.user.id, unreadCount);
 
     return { message: 'Notification deleted successfully' };
   }
 
   @Delete()
   async removeAll(@Request() req) {
-    await this.notificationsService.removeAll(req.user.userId);
+    await this.notificationsService.removeAll(req.user.id);
 
     // Update unread count to 0
-    this.notificationsGateway.notifyUnreadCount(req.user.userId, 0);
+    this.notificationsGateway.notifyUnreadCount(req.user.id, 0);
 
     return { message: 'All notifications deleted successfully' };
   }

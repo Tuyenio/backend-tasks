@@ -8,6 +8,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { User } from './user.entity';
+import { CommentReaction } from './comment-reaction.entity';
 
 @Entity('task_comments')
 export class Comment {
@@ -22,6 +23,9 @@ export class Comment {
 
   @ManyToOne(() => User)
   author: User;
+
+  @OneToMany(() => CommentReaction, (reaction) => reaction.comment)
+  reactions: CommentReaction[];
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

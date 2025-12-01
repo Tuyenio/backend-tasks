@@ -13,6 +13,8 @@ import {
 import { User } from './user.entity';
 import { Project } from './project.entity';
 import { Tag } from './tag.entity';
+import { ChecklistItem } from './checklist-item.entity';
+import { TaskReminder } from './task-reminder.entity';
 
 export enum TaskStatus {
   TODO = 'todo',
@@ -91,6 +93,12 @@ export class Task {
     inverseJoinColumn: { name: 'tag_id', referencedColumnName: 'id' },
   })
   tags: Tag[];
+
+  @OneToMany(() => ChecklistItem, (item) => item.task)
+  checklist: ChecklistItem[];
+
+  @OneToMany(() => TaskReminder, (reminder) => reminder.task)
+  reminders: TaskReminder[];
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
