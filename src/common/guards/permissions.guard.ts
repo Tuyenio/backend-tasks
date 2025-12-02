@@ -24,19 +24,30 @@ export class PermissionsGuard implements CanActivate {
       return false;
     }
 
+    // DEBUG: Log permission check
+    console.log('🔒 PermissionsGuard - Checking permissions');
+    console.log('🔒 User:', user.email);
+    console.log('🔒 User Roles:', user.roles?.map(r => ({ name: r.name, permissions: r.permissions })));
+    console.log('🔒 Required Permissions:', requiredPermissions);
+
     // Super admin has all permissions
     const isSuperAdmin = user.roles?.some(role => role.name === 'super_admin');
     if (isSuperAdmin) {
+      console.log('✅ Super admin bypass granted');
       return true;
     }
 
     // Aggregate permissions from all roles
     const userPermissions = this.aggregateUserPermissions(user);
+    console.log('🔒 User Permissions:', userPermissions);
 
     // Check if user has all required permissions
-    return requiredPermissions.every(permission =>
+    const hasPermissions = requiredPermissions.every(permission =>
       userPermissions.includes(permission),
     );
+    console.log('🔒 Has Permissions:', hasPermissions);
+
+    return hasPermissions;
   }
 
   private aggregateUserPermissions(user: User): string[] {

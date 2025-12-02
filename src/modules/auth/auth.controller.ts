@@ -76,6 +76,30 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('test-jwt')
+  async testJwt(@Request() req) {
+    const user = req.user;
+    return {
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        isActive: user.isActive,
+        isLocked: user.isLocked,
+        roles: user.roles?.map(r => ({
+          id: r.id,
+          name: r.name,
+          displayName: r.displayName,
+          permissionsCount: r.permissions?.length || 0,
+          permissions: r.permissions,
+        })),
+      },
+      message: 'JWT token is valid and contains roles',
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refreshToken(@Request() req) {

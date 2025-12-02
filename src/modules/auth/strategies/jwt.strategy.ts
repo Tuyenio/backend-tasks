@@ -41,6 +41,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Account has been locked');
     }
 
+    // DEBUG: Log user roles and permissions
+    console.log('🔍 JWT Validate - User:', user.email);
+    console.log('🔍 JWT Validate - Roles:', user.roles?.map(r => ({ name: r.name, permissions: r.permissions })));
+
+    // Ensure roles are loaded with permissions (simple-array is auto-loaded)
+    // This is needed for PermissionsGuard to work properly
     return user;
   }
 }
