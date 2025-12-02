@@ -2,6 +2,7 @@
 export * from './user.entity';
 export * from './role.entity';
 export * from './user-session.entity';
+export * from './user-invitation.entity';
 
 // Projects
 export * from './project.entity';

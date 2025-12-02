@@ -7,6 +7,8 @@ import {
   Request,
   HttpCode,
   HttpStatus,
+  Param,
+  Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
@@ -16,8 +18,12 @@ import {
   ResetPasswordDto,
   ChangePasswordDto,
   VerifyEmailDto,
+  InviteUserDto,
+  AcceptInviteDto,
 } from './dto/auth.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { PermissionsGuard } from '../../common/guards/permissions.guard';
+import { RequirePermissions } from '../../common/decorators/permissions.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -82,5 +88,25 @@ export class AuthController {
   async logout() {
     // Token invalidation would be handled by a token blacklist or session management
     return { message: 'Logged out successfully' };
+  }
+
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions('users.invite')
+  @Post('invite')
+  @HttpCode(HttpStatus.OK)
+  async inviteUser(@Body() inviteUserDto: InviteUserDto, @Request() req) {
+    return this.authService.inviteUser(inviteUserDto, req.user.id);
+  }
+
+  @Get('verify-invite')
+  @HttpCode(HttpStatus.OK)
+  async verifyInviteToken(@Query('token') token: string) {
+    return this.authService.verifyInviteToken(token);
+  }
+
+  @Post('accept-invite')
+  @HttpCode(HttpStatus.CREATED)
+  async acceptInvite(@Body() acceptInviteDto: AcceptInviteDto) {
+    return this.authService.acceptInvite(acceptInviteDto);
   }
 }

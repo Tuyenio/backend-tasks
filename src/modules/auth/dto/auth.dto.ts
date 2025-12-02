@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsString,
   MinLength,
+  IsArray,
 } from 'class-validator';
 
 export class RegisterDto {
@@ -67,4 +68,33 @@ export class VerifyEmailDto {
   @IsString()
   @IsNotEmpty()
   token: string;
+}
+
+export class InviteUserDto {
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @IsArray()
+  @IsOptional()
+  roleIds?: string[];
+}
+
+export class AcceptInviteDto {
+  @IsString()
+  @IsNotEmpty()
+  token: string;
+
+  @IsString()
+  @MinLength(6)
+  @IsNotEmpty()
+  password: string;
+
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsString()
+  @IsOptional()
+  phone?: string;
 }

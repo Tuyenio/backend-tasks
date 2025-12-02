@@ -7,6 +7,7 @@ import { UserSettings } from '../../entities/user-settings.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
+import { EmailService } from '../email/email.service';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -18,6 +19,7 @@ export class UsersService {
     private rolesRepository: Repository<Role>,
     @InjectRepository(UserSettings)
     private userSettingsRepository: Repository<UserSettings>,
+    private emailService: EmailService,
   ) {}
 
   async findAll(query: QueryUserDto): Promise<{ data: User[]; total: number; page: number; limit: number }> {
@@ -103,24 +105,61 @@ export class UsersService {
     }
 
     // Hash password
+    const plainPassword = createUserDto.password; // Store for email
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
-    // Get default member role
-    const memberRole = await this.rolesRepository.findOne({ 
-      where: { name: 'member' } 
-    });
+    // Handle name - split if provided, otherwise use firstName/lastName
+    let finalName = '';
+    if (createUserDto.name) {
+      finalName = createUserDto.name;
+    } else if (createUserDto.firstName || createUserDto.lastName) {
+      finalName = `${createUserDto.firstName || ''} ${createUserDto.lastName || ''}`.trim();
+    }
 
-    if (!memberRole) {
-      throw new NotFoundException('Default member role not found');
+    // Get roles - either from roleIds or default to member
+    let roles: Role[] = [];
+    if (createUserDto.roleIds && createUserDto.roleIds.length > 0) {
+      roles = await this.rolesRepository.find({
+        where: { id: In(createUserDto.roleIds) },
+      });
+      if (roles.length !== createUserDto.roleIds.length) {
+        throw new BadRequestException('Some roles not found');
+      }
+    } else {
+      // Get default member role
+      const memberRole = await this.rolesRepository.findOne({ 
+        where: { name: 'member' } 
+      });
+      if (!memberRole) {
+        throw new NotFoundException('Default member role not found');
+      }
+      roles = [memberRole];
     }
 
     const user = this.usersRepository.create({
-      ...createUserDto,
+      email: createUserDto.email,
       password: hashedPassword,
-      roles: [memberRole],
+      name: finalName,
+      phone: createUserDto.phone || createUserDto.mobile,
+      avatarUrl: createUserDto.avatar,
+      roles: roles,
     });
 
-    return this.usersRepository.save(user);
+    const savedUser = await this.usersRepository.save(user);
+
+    // Send welcome email with credentials
+    try {
+      await this.emailService.sendAccountCreatedEmail(
+        savedUser.email,
+        savedUser.name,
+        plainPassword,
+      );
+    } catch (error) {
+      console.error('Failed to send account created email:', error);
+      // Don't fail user creation if email fails
+    }
+
+    return savedUser;
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
@@ -132,6 +171,18 @@ export class UsersService {
       if (existingUser) {
         throw new ConflictException('Email already exists');
       }
+    }
+
+    // Handle roleIds if provided
+    if (updateUserDto.roleIds && updateUserDto.roleIds.length > 0) {
+      const roles = await this.rolesRepository.find({
+        where: { id: In(updateUserDto.roleIds) },
+      });
+      if (roles.length !== updateUserDto.roleIds.length) {
+        throw new BadRequestException('Some roles not found');
+      }
+      user.roles = roles;
+      delete updateUserDto.roleIds; // Don't assign this directly
     }
 
     Object.assign(user, updateUserDto);

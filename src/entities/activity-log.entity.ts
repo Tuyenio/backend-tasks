@@ -7,6 +7,7 @@ import {
   Index,
 } from 'typeorm';
 import { User } from './user.entity';
+import { Project } from './project.entity';
 
 export enum ActivityAction {
   CREATE = 'create',
@@ -32,8 +33,11 @@ export class ActivityLog {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @Column({ type: 'uuid' })
   @Index()
+  userId: string;
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
   user: User;
 
   @Column({
@@ -57,6 +61,13 @@ export class ActivityLog {
 
   @Column({ type: 'varchar', length: 45, nullable: true })
   ipAddress: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  @Index()
+  projectId: string;
+
+  @ManyToOne(() => Project, { nullable: true, onDelete: 'SET NULL' })
+  project: Project;
 
   @CreateDateColumn({ type: 'timestamp' })
   @Index()

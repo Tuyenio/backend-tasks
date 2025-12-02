@@ -4,6 +4,7 @@ import {
   UnauthorizedException,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,14 +12,18 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User, UserStatus } from '../../entities/user.entity';
 import { Role } from '../../entities/role.entity';
+import { UserInvitation, InvitationStatus } from '../../entities/user-invitation.entity';
 import {
   RegisterDto,
   LoginDto,
   ForgotPasswordDto,
   ResetPasswordDto,
   ChangePasswordDto,
+  InviteUserDto,
+  AcceptInviteDto,
 } from './dto/auth.dto';
 import { randomBytes } from 'crypto';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class AuthService {
@@ -27,7 +32,10 @@ export class AuthService {
     private usersRepository: Repository<User>,
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
+    @InjectRepository(UserInvitation)
+    private invitationsRepository: Repository<UserInvitation>,
     private jwtService: JwtService,
+    private emailService: EmailService,
   ) {}
 
   /**
@@ -122,7 +130,17 @@ export class AuthService {
 
     await this.usersRepository.save(user);
 
-    // TODO: Send verification email
+    // Send verification email
+    try {
+      await this.emailService.sendEmailVerificationEmail(
+        user.email,
+        verificationToken,
+        user.name,
+      );
+    } catch (error) {
+      console.error('Failed to send verification email:', error);
+      // Don't fail registration if email fails
+    }
 
     return {
       message: 'Registration successful. Please check your email to verify your account.',
@@ -200,7 +218,17 @@ export class AuthService {
 
     await this.usersRepository.save(user);
 
-    // TODO: Send reset password email
+    // Send reset password email
+    try {
+      await this.emailService.sendPasswordResetEmail(
+        user.email,
+        resetToken,
+        user.name,
+      );
+    } catch (error) {
+      console.error('Failed to send password reset email:', error);
+      // Don't reveal if email sending failed
+    }
 
     return {
       message: 'If the email exists, a reset link has been sent',
@@ -319,4 +347,230 @@ export class AuthService {
       accessToken,
     };
   }
+
+  async inviteUser(inviteUserDto: InviteUserDto, inviterId: string) {
+    const { email, roleIds } = inviteUserDto;
+
+    // Check if user already exists
+    const existingUser = await this.usersRepository.findOne({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('User with this email already exists');
+    }
+
+    // Check if there's a pending invitation
+    const existingInvite = await this.invitationsRepository.findOne({
+      where: { email, status: InvitationStatus.PENDING },
+    });
+
+    // If invite exists and not expired, resend the same token instead of creating new one
+    if (existingInvite && existingInvite.expiresAt > new Date()) {
+      // Resend invitation email with existing token
+      try {
+        const inviterForResend = await this.usersRepository.findOne({ where: { id: inviterId } });
+        if (!inviterForResend) {
+          throw new NotFoundException('Inviter not found');
+        }
+        
+        // Get role names for existing invite
+        const existingRoles = await this.rolesRepository.findByIds(existingInvite.roleIds);
+        const roleNames = existingRoles.map(r => r.displayName || r.name).join(', ');
+        
+        await this.emailService.sendUserInviteEmail(
+          email,
+          existingInvite.token,
+          inviterForResend.name,
+          roleNames,
+        );
+        
+        return {
+          message: 'Invitation resent successfully',
+          invitation: {
+            email,
+            expiresAt: existingInvite.expiresAt,
+            roles: existingRoles.map(r => ({ id: r.id, name: r.name, displayName: r.displayName })),
+          },
+        };
+      } catch (error) {
+        this.logger.error('Failed to resend invitation email:', error);
+        throw new ConflictException('Failed to resend invitation');
+      }
+    }
+
+    // If invite exists but expired or accepted, delete it to allow new invite
+    if (existingInvite) {
+      await this.invitationsRepository.remove(existingInvite);
+    }
+
+    // Get inviter info
+    const inviter = await this.usersRepository.findOne({
+      where: { id: inviterId },
+    });
+
+    if (!inviter) {
+      throw new NotFoundException('Inviter not found');
+    }
+
+    // Validate roles
+    let roles: Role[] = [];
+    if (roleIds && roleIds.length > 0) {
+      roles = await this.rolesRepository.findByIds(roleIds);
+      if (roles.length !== roleIds.length) {
+        throw new BadRequestException('Some roles not found');
+      }
+    } else {
+      // Default to member role
+      const memberRole = await this.rolesRepository.findOne({
+        where: { name: 'member' },
+      });
+      if (memberRole) {
+        roles = [memberRole];
+      }
+    }
+
+    // Generate invite token (JWT with 7 days expiry)
+    const inviteToken = this.jwtService.sign(
+      { email, roleIds: roles.map(r => r.id), type: 'invite' },
+      { expiresIn: '7d' },
+    );
+
+    // Set expiry date
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    // Create invitation
+    const invitation = this.invitationsRepository.create({
+      email,
+      token: inviteToken,
+      roleIds: roles.map(r => r.id),
+      invitedById: inviterId,
+      expiresAt,
+      status: InvitationStatus.PENDING,
+    });
+
+    await this.invitationsRepository.save(invitation);
+
+    // Send invitation email
+    try {
+      const roleNames = roles.map(r => r.displayName || r.name).join(', ');
+      await this.emailService.sendUserInviteEmail(
+        email,
+        inviteToken,
+        inviter.name,
+        roleNames,
+      );
+    } catch (error) {
+      this.logger.error('Failed to send invitation email:', error);
+      // Don't fail the invitation if email fails
+    }
+
+    return {
+      message: 'Invitation sent successfully',
+      invitation: {
+        email,
+        expiresAt,
+        roles: roles.map(r => ({ id: r.id, name: r.name, displayName: r.displayName })),
+      },
+    };
+  }
+
+  async verifyInviteToken(token: string) {
+    try {
+      const payload = this.jwtService.verify(token);
+
+      if (payload.type !== 'invite') {
+        throw new BadRequestException('Invalid token type');
+      }
+
+      // Check invitation in database
+      const invitation = await this.invitationsRepository.findOne({
+        where: { token },
+        relations: ['invitedBy'],
+      });
+
+      if (!invitation) {
+        throw new NotFoundException('Invitation not found');
+      }
+
+      if (invitation.status !== InvitationStatus.PENDING) {
+        throw new BadRequestException('Invitation has already been used or cancelled');
+      }
+
+      if (invitation.expiresAt < new Date()) {
+        invitation.status = InvitationStatus.EXPIRED;
+        await this.invitationsRepository.save(invitation);
+        throw new BadRequestException('Invitation has expired');
+      }
+
+      // Check if user already exists
+      const existingUser = await this.usersRepository.findOne({
+        where: { email: invitation.email },
+      });
+
+      if (existingUser) {
+        throw new ConflictException('User already exists');
+      }
+
+      // Get role names
+      const roles = await this.rolesRepository.findByIds(invitation.roleIds);
+
+      return {
+        email: invitation.email,
+        inviterName: invitation.invitedBy?.name || 'Administrator',
+        roles: roles.map(r => ({ id: r.id, name: r.name, displayName: r.displayName })),
+      };
+    } catch (error) {
+      if (error.name === 'TokenExpiredError') {
+        throw new BadRequestException('Invitation token has expired');
+      }
+      throw error;
+    }
+  }
+
+  async acceptInvite(acceptInviteDto: AcceptInviteDto) {
+    const { token, password, name, phone } = acceptInviteDto;
+
+    // Verify token and get invitation
+    const inviteInfo = await this.verifyInviteToken(token);
+
+    const invitation = await this.invitationsRepository.findOne({
+      where: { token },
+    });
+
+    if (!invitation) {
+      throw new NotFoundException('Invitation not found');
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Get roles
+    const roles = await this.rolesRepository.findByIds(invitation.roleIds);
+
+    // Create user
+    const user = this.usersRepository.create({
+      email: inviteInfo.email,
+      password: hashedPassword,
+      name,
+      phone,
+      roles,
+      emailVerified: true, // Auto-verify for invited users
+      isActive: true,
+    });
+
+    await this.usersRepository.save(user);
+
+    // Mark invitation as accepted
+    invitation.status = InvitationStatus.ACCEPTED;
+    await this.invitationsRepository.save(invitation);
+
+    return {
+      message: 'Account created successfully',
+      user: this.formatUserResponse(user),
+    };
+  }
+
+  private readonly logger = new Logger(AuthService.name);
 }

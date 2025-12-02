@@ -122,6 +122,26 @@ export class EmailService {
     });
   }
 
+  async sendUserInviteEmail(email: string, inviteToken: string, inviterName: string, roleName: string) {
+    const template = this.getUserInviteTemplate(inviteToken, inviterName, roleName);
+    return this.sendEmail({
+      to: email,
+      subject: template.subject,
+      html: template.html,
+      text: template.text,
+    });
+  }
+
+  async sendAccountCreatedEmail(email: string, name: string, password: string) {
+    const template = this.getAccountCreatedTemplate(email, name, password);
+    return this.sendEmail({
+      to: email,
+      subject: template.subject,
+      html: template.html,
+      text: template.text,
+    });
+  }
+
   // Email Templates
   private getWelcomeTemplate(name: string): EmailTemplate {
     return {
@@ -259,6 +279,83 @@ export class EmailService {
         </div>
       `,
       text: `Project Invitation: ${projectName}\n\n${inviterName} has invited you to join this project.`,
+    };
+  }
+
+  private getUserInviteTemplate(inviteToken: string, inviterName: string, roleName: string): EmailTemplate {
+    const acceptUrl = `${this.configService.get('FRONTEND_URL', 'http://localhost:3000')}/accept-invite?token=${inviteToken}`;
+    return {
+      subject: `Lời mời tham gia TaskMaster từ ${inviterName}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #3b82f6;">Lời mời tham gia TaskMaster</h1>
+          <p>Xin chào,</p>
+          <p><strong>${inviterName}</strong> đã mời bạn tham gia hệ thống quản lý công việc TaskMaster với vai trò <strong>${roleName}</strong>.</p>
+          <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+            <p style="margin: 0; color: #1e40af;">💼 Vai trò: <strong>${roleName}</strong></p>
+            <p style="margin: 10px 0 0 0; color: #1e40af;">👤 Người mời: <strong>${inviterName}</strong></p>
+          </div>
+          <p>Nhấn vào nút bên dưới để kích hoạt tài khoản và thiết lập mật khẩu của bạn:</p>
+          <div style="margin: 30px 0; text-align: center;">
+            <a href="${acceptUrl}" 
+               style="background-color: #3b82f6; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600;">
+              🔐 Kích hoạt tài khoản
+            </a>
+          </div>
+          <p style="color: #ef4444; font-size: 14px;">⚠️ Lời mời này sẽ hết hạn sau 7 ngày.</p>
+          <p>Nếu bạn không yêu cầu lời mời này, vui lòng bỏ qua email.</p>
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+          <p style="color: #6b7280; font-size: 12px;">
+            Trân trọng,<br>
+            <strong>TaskMaster Team</strong>
+          </p>
+        </div>
+      `,
+      text: `Lời mời tham gia TaskMaster\n\n${inviterName} đã mời bạn tham gia với vai trò ${roleName}.\n\nKích hoạt tài khoản: ${acceptUrl}\n\nLời mời hết hạn sau 7 ngày.`,
+    };
+  }
+
+  private getAccountCreatedTemplate(email: string, name: string, password: string): EmailTemplate {
+    const loginUrl = `${this.configService.get('FRONTEND_URL', 'http://localhost:3000')}/login`;
+    return {
+      subject: `Tài khoản TaskMaster của bạn đã được tạo`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #10b981;">🎉 Tài khoản đã được tạo thành công!</h1>
+          <p>Xin chào <strong>${name}</strong>,</p>
+          <p>Quản trị viên đã tạo tài khoản TaskMaster cho bạn. Dưới đây là thông tin đăng nhập:</p>
+          <div style="background-color: #f0fdf4; padding: 24px; border-radius: 8px; margin: 24px 0; border-left: 4px solid #10b981;">
+            <p style="margin: 0 0 12px 0; color: #065f46; font-size: 14px;">📧 <strong>Email đăng nhập:</strong></p>
+            <p style="margin: 0 0 20px 0; padding: 12px; background: white; border-radius: 4px; font-family: monospace; font-size: 16px; color: #047857;">${email}</p>
+            
+            <p style="margin: 0 0 12px 0; color: #065f46; font-size: 14px;">🔑 <strong>Mật khẩu tạm thời:</strong></p>
+            <p style="margin: 0; padding: 12px; background: white; border-radius: 4px; font-family: monospace; font-size: 16px; color: #047857; font-weight: 600;">${password}</p>
+          </div>
+          <div style="background-color: #fef3c7; padding: 16px; border-radius: 6px; margin: 20px 0;">
+            <p style="margin: 0; color: #92400e; font-size: 14px;">⚠️ <strong>Lưu ý bảo mật:</strong></p>
+            <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #92400e; font-size: 14px;">
+              <li>Hãy đổi mật khẩu ngay sau khi đăng nhập lần đầu</li>
+              <li>Không chia sẻ mật khẩu với bất kỳ ai</li>
+              <li>Sử dụng mật khẩu mạnh (ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt)</li>
+            </ul>
+          </div>
+          <div style="margin: 32px 0; text-align: center;">
+            <a href="${loginUrl}" 
+               style="background-color: #10b981; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 16px;">
+              🚀 Đăng nhập ngay
+            </a>
+          </div>
+          <p style="color: #6b7280; font-size: 14px; margin-top: 32px;">
+            Nếu bạn không yêu cầu tài khoản này, vui lòng liên hệ quản trị viên.
+          </p>
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">
+          <p style="color: #6b7280; font-size: 12px;">
+            Trân trọng,<br>
+            <strong>TaskMaster Team</strong>
+          </p>
+        </div>
+      `,
+      text: `Tài khoản TaskMaster đã được tạo\n\nXin chào ${name},\n\nEmail: ${email}\nMật khẩu tạm thời: ${password}\n\nHãy đổi mật khẩu ngay sau khi đăng nhập.\n\nĐăng nhập tại: ${loginUrl}`,
     };
   }
 

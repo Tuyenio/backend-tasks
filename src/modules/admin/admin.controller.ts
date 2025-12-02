@@ -91,9 +91,8 @@ export class AdminController {
     return this.adminService.getTopUsers(parseInt(limit));
   }
 
-  // System Health
+  // System Health (Public endpoint for monitoring)
   @Get('health')
-  @RequirePermissions('settings.view')
   async getSystemHealth() {
     return this.adminService.getSystemHealth();
   }
