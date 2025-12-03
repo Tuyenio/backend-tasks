@@ -14,7 +14,7 @@ export const dataSourceOptions: DataSourceOptions = {
   schema: process.env.DB_SCHEMA || 'public',
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
-  synchronize: process.env.NODE_ENV === 'development',
+  synchronize: false,
   logging: process.env.NODE_ENV === 'development',
 };
 

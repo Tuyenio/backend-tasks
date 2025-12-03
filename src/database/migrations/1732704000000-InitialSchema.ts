@@ -23,6 +23,7 @@ export class InitialSchema1732704000000 implements MigrationInterface {
         "jobRole" varchar(100),
         "status" varchar(20) DEFAULT 'offline',
         "isActive" boolean DEFAULT true,
+        "isLocked" boolean DEFAULT false,
         "emailVerified" boolean DEFAULT false,
         "verificationToken" varchar(255),
         "resetPasswordToken" varchar(255),
