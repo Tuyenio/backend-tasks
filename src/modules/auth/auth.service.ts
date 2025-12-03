@@ -196,6 +196,76 @@ export class AuthService {
     };
   }
 
+  /**
+   * Validate Google OAuth user
+   * If user exists with email, login
+   * If not, create new user from Google profile
+   */
+  async validateGoogleUser(googleData: {
+    googleId: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    picture: string;
+  }) {
+    // Find user by email
+    let user = await this.usersRepository.findOne({
+      where: { email: googleData.email },
+      relations: ['roles'],
+    });
+
+    if (user) {
+      // User exists - just update last login
+      user.lastLoginAt = new Date();
+      user.status = UserStatus.ONLINE;
+      await this.usersRepository.save(user);
+    } else {
+      // Create new user from Google profile
+      const memberRole = await this.rolesRepository.findOne({
+        where: { name: 'member' },
+      });
+
+      if (!memberRole) {
+        throw new NotFoundException('Member role not found');
+      }
+
+      user = this.usersRepository.create({
+        email: googleData.email,
+        name: `${googleData.firstName} ${googleData.lastName}`,
+        password: await bcrypt.hash(randomBytes(32).toString('hex'), 10), // Random password
+        avatarUrl: googleData.picture,
+        emailVerified: true, // Google email is already verified
+        isActive: true,
+        status: UserStatus.ONLINE,
+        roles: [memberRole],
+      });
+
+      user = await this.usersRepository.save(user);
+      
+      // Reload with relations
+      user = await this.usersRepository.findOne({
+        where: { id: user.id },
+        relations: ['roles'],
+      });
+
+      if (!user) {
+        throw new NotFoundException('User not found after creation');
+      }
+    }
+
+    // Generate JWT token
+    const payload = { sub: user.id, email: user.email };
+    const accessToken = this.jwtService.sign(payload);
+
+    // Format user response
+    const formattedUser = this.formatUserResponse(user);
+
+    return {
+      accessToken,
+      user: formattedUser,
+    };
+  }
+
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
     const { email } = forgotPasswordDto;
 

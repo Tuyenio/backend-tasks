@@ -9,7 +9,10 @@ import {
   HttpStatus,
   Param,
   Query,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
+import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import {
   RegisterDto,
@@ -132,5 +135,25 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   async acceptInvite(@Body() acceptInviteDto: AcceptInviteDto) {
     return this.authService.acceptInvite(acceptInviteDto);
+  }
+
+  // Google OAuth routes
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  async googleAuth() {
+    // Initiates the Google OAuth flow
+  }
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthCallback(@Request() req, @Res() res: Response) {
+    // User data from Google Strategy
+    const { accessToken, user } = req.user;
+    
+    // Redirect to frontend with token and user data
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const redirectUrl = `${frontendUrl}/auth-callback?token=${accessToken}&user=${encodeURIComponent(JSON.stringify(user))}`;
+    
+    return res.redirect(redirectUrl);
   }
 }
