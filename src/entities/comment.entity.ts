@@ -8,6 +8,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { User } from './user.entity';
+import { Task } from './task.entity';
 import { CommentReaction } from './comment-reaction.entity';
 
 @Entity('task_comments')
@@ -18,8 +19,8 @@ export class Comment {
   @Column({ type: 'text' })
   content: string;
 
-  @Column({ type: 'uuid' })
-  taskId: string;
+  @ManyToOne(() => Task, (task) => task.comments, { onDelete: 'CASCADE' })
+  task: Task;
 
   @ManyToOne(() => User)
   author: User;

@@ -15,6 +15,8 @@ import { Project } from './project.entity';
 import { Tag } from './tag.entity';
 import { ChecklistItem } from './checklist-item.entity';
 import { TaskReminder } from './task-reminder.entity';
+import { Attachment } from './attachment.entity';
+import { Comment } from './comment.entity';
 
 export enum TaskStatus {
   TODO = 'todo',
@@ -95,10 +97,16 @@ export class Task {
   tags: Tag[];
 
   @OneToMany(() => ChecklistItem, (item) => item.task)
-  checklist: ChecklistItem[];
+  checklistItems: ChecklistItem[];
 
   @OneToMany(() => TaskReminder, (reminder) => reminder.task)
   reminders: TaskReminder[];
+
+  @OneToMany(() => Attachment, (attachment) => attachment.task)
+  attachments: Attachment[];
+
+  @OneToMany(() => Comment, (comment) => comment.task)
+  comments: Comment[];
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

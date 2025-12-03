@@ -109,7 +109,8 @@ export class TasksService {
 
     // Sorting
     const orderDirection = sortOrder === 'ASC' ? 'ASC' : 'DESC';
-    queryBuilder.orderBy(`task.${sortBy}`, orderDirection);
+    const sortField = sortBy || 'createdAt';
+    queryBuilder.orderBy(`task.${sortField}`, orderDirection);
 
     // Pagination
     const skip = (page - 1) * limit;
@@ -384,8 +385,8 @@ export class TasksService {
 
     const comment = this.commentsRepository.create({
       content: dto.content,
-      taskId: task.id,
     });
+    comment.task = task;
     comment.author = user;
 
     const savedComment = await this.commentsRepository.save(comment);
@@ -413,8 +414,8 @@ export class TasksService {
 
   async updateComment(taskId: string, commentId: string, dto: UpdateCommentDto, userId: string): Promise<Comment> {
     const comment = await this.commentsRepository.findOne({
-      where: { id: commentId, taskId },
-      relations: ['author'],
+      where: { id: commentId, task: { id: taskId } },
+      relations: ['author', 'task'],
     });
 
     if (!comment) {
@@ -431,8 +432,8 @@ export class TasksService {
 
   async removeComment(taskId: string, commentId: string, userId: string): Promise<void> {
     const comment = await this.commentsRepository.findOne({
-      where: { id: commentId, taskId },
-      relations: ['author'],
+      where: { id: commentId, task: { id: taskId } },
+      relations: ['author', 'task'],
     });
 
     if (!comment) {
