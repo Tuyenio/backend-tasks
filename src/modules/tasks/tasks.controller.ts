@@ -48,6 +48,15 @@ export class TasksController {
     return this.tasksService.findOne(id);
   }
 
+  @Get(':id/activity-logs')
+  @RequirePermissions('tasks.view')
+  getActivityLogs(
+    @Param('id') id: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.tasksService.getActivityLogs(id, limit ? parseInt(limit) : 50);
+  }
+
   @Post()
   @RequirePermissions('tasks.create')
   @HttpCode(HttpStatus.CREATED)
@@ -174,6 +183,12 @@ export class TasksController {
   }
 
   // Comments
+  @Get(':id/comments')
+  @RequirePermissions('tasks.view')
+  getComments(@Param('id') id: string) {
+    return this.tasksService.getComments(id);
+  }
+
   @Post(':id/comments')
   @RequirePermissions('tasks.view')
   @HttpCode(HttpStatus.CREATED)

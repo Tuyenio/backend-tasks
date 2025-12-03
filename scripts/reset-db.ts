@@ -18,6 +18,8 @@ async function resetDatabase() {
     const tables = [
       'system_settings',
       'custom_themes',
+      'themes',
+      'user_settings',
       'activity_logs',
       'notifications',
       'message_read_status',

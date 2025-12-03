@@ -374,6 +374,19 @@ export class TasksService {
   }
 
   // Comments
+  async getComments(taskId: string): Promise<Comment[]> {
+    const task = await this.tasksRepository.findOne({ where: { id: taskId } });
+    if (!task) {
+      throw new NotFoundException('Task not found');
+    }
+
+    return this.commentsRepository.find({
+      where: { task: { id: taskId } },
+      relations: ['author', 'reactions', 'reactions.user'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async addComment(taskId: string, dto: CreateCommentDto, userId: string): Promise<Comment> {
     const task = await this.findOne(taskId);
     await this.checkTaskPermission(task, userId);
@@ -543,6 +556,23 @@ export class TasksService {
     if (!isMember && !isOwner) {
       throw new ForbiddenException('You do not have permission to modify this task');
     }
+  }
+
+  async getActivityLogs(taskId: string, limit: number = 50): Promise<ActivityLog[]> {
+    const task = await this.tasksRepository.findOne({ where: { id: taskId } });
+    if (!task) {
+      throw new NotFoundException('Task not found');
+    }
+
+    return this.activityLogsRepository.find({
+      where: {
+        entityType: ActivityEntityType.TASK,
+        entityId: taskId,
+      },
+      relations: ['user'],
+      order: { createdAt: 'DESC' },
+      take: limit,
+    });
   }
 
   private async logActivity(

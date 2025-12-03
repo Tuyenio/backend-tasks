@@ -68,8 +68,10 @@ export class ProjectsService {
     }
 
     // Sorting
+    const validSortFields = ['name', 'status', 'progress', 'createdAt', 'startDate', 'endDate', 'deadline'];
     const orderDirection = sortOrder === 'ASC' ? 'ASC' : 'DESC';
-    queryBuilder.orderBy(`project.${sortBy}`, orderDirection);
+    const sortField = sortBy && validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    queryBuilder.orderBy(`project.${sortField}`, orderDirection);
 
     // Pagination
     const skip = (page - 1) * limit;
@@ -130,11 +132,24 @@ export class ProjectsService {
   async update(id: string, updateProjectDto: UpdateProjectDto, userId: string): Promise<Project> {
     const project = await this.findOne(id);
 
-    // Check if user is a member or creator
+    // Get user with roles
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['roles'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Check if user has permission (super_admin, admin, or is member/creator)
+    const hasAdminRole = user.roles.some(
+      (role) => role.name === 'super_admin' || role.name === 'admin'
+    );
     const isMember = project.members.some(member => member.id === userId);
     const isCreator = project.createdBy.id === userId;
 
-    if (!isMember && !isCreator) {
+    if (!hasAdminRole && !isMember && !isCreator) {
       throw new ForbiddenException('You are not authorized to update this project');
     }
 
@@ -169,11 +184,24 @@ export class ProjectsService {
   async addMembers(projectId: string, userIds: string[], userId: string): Promise<Project> {
     const project = await this.findOne(projectId);
 
-    // Check if requester is a member or creator
+    // Get user with roles
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['roles'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Check if user has permission (super_admin, admin, or is member/creator)
+    const hasAdminRole = user.roles.some(
+      (role) => role.name === 'super_admin' || role.name === 'admin'
+    );
     const isMember = project.members.some(member => member.id === userId);
     const isCreator = project.createdBy.id === userId;
 
-    if (!isMember && !isCreator) {
+    if (!hasAdminRole && !isMember && !isCreator) {
       throw new ForbiddenException('You are not authorized to add members to this project');
     }
 
@@ -205,9 +233,24 @@ export class ProjectsService {
   async removeMember(projectId: string, memberId: string, userId: string): Promise<Project> {
     const project = await this.findOne(projectId);
 
-    // Check if requester is creator
-    if (project.createdBy.id !== userId) {
-      throw new ForbiddenException('Only the project creator can remove members');
+    // Get user with roles
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['roles'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Check if user has permission (super_admin, admin, or is creator)
+    const hasAdminRole = user.roles.some(
+      (role) => role.name === 'super_admin' || role.name === 'admin'
+    );
+    const isCreator = project.createdBy.id === userId;
+
+    if (!hasAdminRole && !isCreator) {
+      throw new ForbiddenException('Only the project creator or admin can remove members');
     }
 
     // Cannot remove creator
@@ -231,11 +274,24 @@ export class ProjectsService {
   async addTags(projectId: string, tagIds: string[], userId: string): Promise<Project> {
     const project = await this.findOne(projectId);
 
-    // Check if user is a member or creator
+    // Get user with roles
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['roles'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Check if user has permission (super_admin, admin, or is member/creator)
+    const hasAdminRole = user.roles.some(
+      (role) => role.name === 'super_admin' || role.name === 'admin'
+    );
     const isMember = project.members.some(member => member.id === userId);
     const isCreator = project.createdBy.id === userId;
 
-    if (!isMember && !isCreator) {
+    if (!hasAdminRole && !isMember && !isCreator) {
       throw new ForbiddenException('You are not authorized to add tags to this project');
     }
 
