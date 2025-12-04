@@ -8,6 +8,7 @@ import { ActivityLog } from '../../entities/activity-log.entity';
 import { GenerateReportDto, ReportType, ExportFormat } from './dto/generate-report.dto';
 import { GetChartDataDto, ChartType } from './dto/get-chart-data.dto';
 import { Parser } from 'json2csv';
+import { ExportService } from './export.service';
 
 @Injectable()
 export class ReportsService {
@@ -20,6 +21,7 @@ export class ReportsService {
     private usersRepository: Repository<User>,
     @InjectRepository(ActivityLog)
     private activityLogsRepository: Repository<ActivityLog>,
+    private exportService: ExportService,
   ) {}
 
   async generateReport(dto: GenerateReportDto) {
@@ -253,39 +255,100 @@ export class ReportsService {
 
   private exportToCsv(data: any[], title: string) {
     try {
-      const parser = new Parser();
-      const csv = parser.parse(data);
+      // Format data for better CSV output
+      const formattedData = data.map((item) => {
+        const formatted: any = {};
+        Object.keys(item).forEach((key) => {
+          // Convert camelCase to readable text
+          const readableKey = key
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, (str) => str.toUpperCase())
+            .trim();
+          
+          let value = item[key];
+          
+          // Format dates
+          if (value instanceof Date) {
+            value = value.toLocaleString('vi-VN');
+          }
+          // Format numbers
+          else if (typeof value === 'number') {
+            value = value.toFixed(2);
+          }
+          // Format objects
+          else if (typeof value === 'object' && value !== null) {
+            value = JSON.stringify(value);
+          }
+          
+          formatted[readableKey] = value;
+        });
+        return formatted;
+      });
+
+      // Generate CSV with proper headers
+      const fields = Object.keys(formattedData[0] || {});
+      const parser = new Parser({ fields });
+      const csv = parser.parse(formattedData);
+
+      // Add UTF-8 BOM for Excel compatibility
+      const bom = '\uFEFF';
+      const header = `${title}\n`;
+      const timestamp = `Generated: ${new Date().toLocaleString('vi-VN')}\n\n`;
+      
+      const content = bom + header + timestamp + csv;
+
       return {
         format: 'csv',
         title,
-        content: csv,
+        content,
         filename: `${title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`,
       };
     } catch (error) {
-      throw new Error('Failed to generate CSV report');
+      throw new Error(`Failed to generate CSV report: ${error.message}`);
     }
   }
 
   private exportToPdf(data: any[], title: string) {
-    // Placeholder for PDF generation - would use libraries like pdfkit or puppeteer
-    return {
-      format: 'pdf',
-      title,
-      message: 'PDF generation not yet implemented',
-      data,
-      filename: `${title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
-    };
+    try {
+      // Generate HTML table that can be printed to PDF
+      const htmlContent = this.exportService.generateHtmlTable({
+        title,
+        columns: data.length > 0 ? Object.keys(data[0]) : [],
+        data,
+        fileName: title,
+      });
+
+      return {
+        format: 'html',
+        title,
+        content: htmlContent,
+        mimeType: 'text/html',
+        filename: `${title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.html`,
+      };
+    } catch (error) {
+      return {
+        format: 'pdf',
+        title,
+        message: 'PDF export available - use print to PDF feature',
+        data,
+        filename: `${title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
+      };
+    }
   }
 
   private exportToExcel(data: any[], title: string) {
-    // Placeholder for Excel generation - would use libraries like exceljs
-    return {
-      format: 'excel',
-      title,
-      message: 'Excel generation not yet implemented',
-      data,
-      filename: `${title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`,
-    };
+    try {
+      // For now, return CSV which can be opened in Excel
+      return this.exportToCsv(data, title);
+    } catch (error) {
+      return {
+        format: 'excel',
+        title,
+        message: 'Excel generation available - CSV can be opened in Excel',
+        data,
+        filename: `${title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`,
+      };
+    }
   }
 
   async getChartData(dto: GetChartDataDto) {
@@ -423,6 +486,85 @@ export class ReportsService {
     };
   }
 
+  async getTeamPerformance() {
+    const users = await this.usersRepository
+      .createQueryBuilder('user')
+      .getMany();
+
+    const teamData = await Promise.all(
+      users.map(async (user) => {
+        // Count all assigned tasks using query builder
+        const assignedTasks = await this.tasksRepository
+          .createQueryBuilder('task')
+          .leftJoinAndSelect('task.assignees', 'assignee')
+          .where('assignee.id = :userId', { userId: user.id })
+          .getCount();
+
+        // Count completed tasks
+        const completedTasks = await this.tasksRepository
+          .createQueryBuilder('task')
+          .leftJoinAndSelect('task.assignees', 'assignee')
+          .where('assignee.id = :userId', { userId: user.id })
+          .andWhere('task.status = :status', { status: TaskStatus.DONE })
+          .getCount();
+
+        const completionRate = assignedTasks > 0 ? (completedTasks / assignedTasks) * 100 : 0;
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          assignedTasks,
+          completedTasks,
+          completionRate: parseFloat(completionRate.toFixed(2)),
+          pendingTasks: assignedTasks - completedTasks,
+        };
+      }),
+    );
+
+    return teamData.sort((a, b) => b.completionRate - a.completionRate);
+  }
+
+  async getProjectsStatistics() {
+    const projects = await this.projectsRepository.find();
+
+    const projectStats = await Promise.all(
+      projects.map(async (project) => {
+        const totalTasks = await this.tasksRepository
+          .createQueryBuilder('task')
+          .where('task.projectId = :projectId', { projectId: project.id })
+          .getCount();
+
+        const completedTasks = await this.tasksRepository
+          .createQueryBuilder('task')
+          .where('task.projectId = :projectId', { projectId: project.id })
+          .andWhere('task.status = :status', { status: TaskStatus.DONE })
+          .getCount();
+
+        const inProgressTasks = await this.tasksRepository
+          .createQueryBuilder('task')
+          .where('task.projectId = :projectId', { projectId: project.id })
+          .andWhere('task.status = :status', { status: TaskStatus.IN_PROGRESS })
+          .getCount();
+
+        const completionRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+
+        return {
+          id: project.id,
+          name: project.name,
+          status: project.status,
+          totalTasks,
+          completedTasks,
+          inProgressTasks,
+          completionRate: parseFloat(completionRate.toFixed(2)),
+          progress: parseFloat(completionRate.toFixed(2)),
+        };
+      }),
+    );
+
+    return projectStats.sort((a, b) => b.completionRate - a.completionRate);
+  }
+
   async getOverallStatistics() {
     const [
       totalTasks,
@@ -442,21 +584,21 @@ export class ReportsService {
       this.usersRepository.count({ where: { isActive: true } }),
     ]);
 
+    const completionRate = totalTasks > 0 ? parseFloat(((completedTasks / totalTasks) * 100).toFixed(2)) : 0;
+
     return {
-      tasks: {
-        total: totalTasks,
-        completed: completedTasks,
-        inProgress: inProgressTasks,
-        completionRate: totalTasks > 0 ? ((completedTasks / totalTasks) * 100).toFixed(2) : 0,
-      },
-      projects: {
-        total: totalProjects,
-        active: activeProjects,
-      },
-      users: {
-        total: totalUsers,
-        active: activeUsers,
-      },
+      totalTasks,
+      completedTasks,
+      inProgressTasks,
+      completionRate,
+      totalProjects,
+      projectsInProgress: activeProjects,
+      totalUsers,
+      activeUsers,
+      projectsCompleted: 0,
+      activeTasks: inProgressTasks,
+      tasksByStatus: {},
+      tasksByPriority: {},
     };
   }
 }

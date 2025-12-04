@@ -49,4 +49,16 @@ export class ReportsController {
   async getOverallStatistics() {
     return this.reportsService.getOverallStatistics();
   }
+
+  @Get('team-performance')
+  @RequirePermissions('reports.view')
+  async getTeamPerformance() {
+    return this.reportsService.getTeamPerformance();
+  }
+
+  @Get('projects-statistics')
+  @RequirePermissions('reports.view')
+  async getProjectsStatistics() {
+    return this.reportsService.getProjectsStatistics();
+  }
 }

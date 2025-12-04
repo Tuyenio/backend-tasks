@@ -244,26 +244,28 @@ export class UploadService {
     const qb = this.attachmentsRepository
       .createQueryBuilder('attachment')
       .leftJoin('attachment.uploadedBy', 'user')
-      .select('SUM(attachment.size)', 'totalSize')
-      .addSelect('COUNT(*)', 'totalFiles')
-      .addSelect('attachment.type', 'fileType');
+      .select('COALESCE(attachment.type, :otherType)', 'fileType')
+      .addSelect('SUM(attachment.size)', 'totalSize')
+      .addSelect('COUNT(attachment.id)', 'totalFiles')
+      .setParameter('otherType', AttachmentType.OTHER);
 
     if (userId) {
       qb.where('user.id = :userId', { userId });
     }
 
-    const stats = await qb.groupBy('attachment.fileType').getRawMany();
+    const stats = await qb.groupBy('COALESCE(attachment.type, :otherType)').getRawMany();
 
-    const totalSize = stats.reduce((sum, stat) => sum + parseInt(stat.totalSize || '0'), 0);
-    const totalFiles = stats.reduce((sum, stat) => sum + parseInt(stat.totalFiles || '0'), 0);
+    const totalSize = stats.reduce((sum, stat) => sum + (parseInt(stat.totalSize || '0') || 0), 0);
+    const totalFiles = stats.reduce((sum, stat) => sum + (parseInt(stat.totalFiles || '0') || 0), 0);
 
     return {
       totalSize,
       totalFiles,
+      fileCount: totalFiles,
       byType: stats.map((stat) => ({
-        type: stat.fileType,
-        size: parseInt(stat.totalSize || '0'),
-        count: parseInt(stat.totalFiles || '0'),
+        type: stat.fileType || AttachmentType.OTHER,
+        size: parseInt(stat.totalSize || '0') || 0,
+        count: parseInt(stat.totalFiles || '0') || 0,
       })),
     };
   }
