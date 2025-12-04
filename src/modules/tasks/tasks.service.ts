@@ -239,10 +239,18 @@ export class TasksService {
       throw new BadRequestException('Some users not found');
     }
 
-    // Check if all users are project members
+    // Check if all users are project members OR are already assignees OR are the task creator
     const projectMembers = task.project.members || [];
     const memberIds = projectMembers.map(m => m.id);
-    const invalidUsers = users.filter(u => !memberIds.includes(u.id));
+    const existingAssigneeIds = task.assignees.map(a => a.id);
+    const isCreator = task.createdBy?.id === userId;
+    
+    const invalidUsers = users.filter(u => {
+      const isMember = memberIds.includes(u.id);
+      const isAlreadyAssigned = existingAssigneeIds.includes(u.id);
+      const isCreatorOfTask = task.createdBy?.id === u.id;
+      return !isMember && !isAlreadyAssigned && !isCreatorOfTask;
+    });
 
     if (invalidUsers.length > 0) {
       throw new BadRequestException('Some users are not members of the project');
@@ -388,41 +396,56 @@ export class TasksService {
   }
 
   async addComment(taskId: string, dto: CreateCommentDto, userId: string): Promise<Comment> {
-    const task = await this.findOne(taskId);
-    await this.checkTaskPermission(task, userId);
+    try {
+      console.log(`[addComment] Starting - taskId: ${taskId}, userId: ${userId}`);
+      
+      const task = await this.findOne(taskId);
+      console.log(`[addComment] Task found: ${task.id}`);
+      
+      await this.checkTaskPermission(task, userId);
+      console.log(`[addComment] Permission check passed`);
 
-    const user = await this.usersRepository.findOne({ where: { id: userId } });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+      const user = await this.usersRepository.findOne({ where: { id: userId } });
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      console.log(`[addComment] User found: ${user.id}`);
 
     const comment = this.commentsRepository.create({
       content: dto.content,
+      taskId: task.id,
+      authorId: user.id,
     });
     comment.task = task;
-    comment.author = user;
+    comment.author = user;      const savedComment = await this.commentsRepository.save(comment);
+      console.log(`[addComment] Comment saved: ${savedComment.id}`);
 
-    const savedComment = await this.commentsRepository.save(comment);
+      // Update comments count
+      task.commentsCount = (task.commentsCount || 0) + 1;
+      await this.tasksRepository.save(task);
+      console.log(`[addComment] Task count updated`);
 
-    // Update comments count
-    task.commentsCount = (task.commentsCount || 0) + 1;
-    await this.tasksRepository.save(task);
+      await this.logActivity(userId, ActivityAction.COMMENT, ActivityEntityType.TASK, taskId, {
+        taskTitle: task.title,
+        comment: dto.content.substring(0, 100),
+      });
+      console.log(`[addComment] Activity logged`);
 
-    await this.logActivity(userId, ActivityAction.COMMENT, ActivityEntityType.TASK, taskId, {
-      taskTitle: task.title,
-      comment: dto.content.substring(0, 100),
-    });
+      const result = await this.commentsRepository.findOne({
+        where: { id: savedComment.id },
+        relations: ['author', 'reactions', 'reactions.user'],
+      });
 
-    const result = await this.commentsRepository.findOne({
-      where: { id: savedComment.id },
-      relations: ['author', 'reactions', 'reactions.user'],
-    });
+      if (!result) {
+        throw new NotFoundException('Comment not found after creation');
+      }
 
-    if (!result) {
-      throw new NotFoundException('Comment not found after creation');
+      console.log(`[addComment] Comment returned successfully: ${result.id}`);
+      return result;
+    } catch (error) {
+      console.error(`[addComment] Error:`, error);
+      throw error;
     }
-
-    return result;
   }
 
   async updateComment(taskId: string, commentId: string, dto: UpdateCommentDto, userId: string): Promise<Comment> {
@@ -550,10 +573,13 @@ export class TasksService {
       throw new NotFoundException('Project not found');
     }
 
-    const isMember = project.members.some(m => m.id === userId);
-    const isOwner = project.createdBy?.id === userId;
+    // Allow: project owner, project member, task creator, or task assignee
+    const isProjectOwner = project.createdBy?.id === userId;
+    const isProjectMember = project.members.some(m => m.id === userId);
+    const isTaskCreator = task.createdBy?.id === userId;
+    const isTaskAssignee = task.assignees?.some(a => a.id === userId);
 
-    if (!isMember && !isOwner) {
+    if (!isProjectOwner && !isProjectMember && !isTaskCreator && !isTaskAssignee) {
       throw new ForbiddenException('You do not have permission to modify this task');
     }
   }

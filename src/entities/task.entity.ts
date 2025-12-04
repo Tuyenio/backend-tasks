@@ -69,6 +69,9 @@ export class Task {
   @Column({ type: 'int', default: 0 })
   commentsCount: number;
 
+  @Column({ type: 'uuid', nullable: true })
+  projectId: string;
+
   @ManyToOne(() => Project, (project) => project.tasks, {
     onDelete: 'CASCADE',
   })
