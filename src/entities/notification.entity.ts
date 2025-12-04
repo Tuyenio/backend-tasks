@@ -15,6 +15,8 @@ export enum NotificationType {
   ERROR = 'error',
   TASK_ASSIGNED = 'task_assigned',
   TASK_COMPLETED = 'task_completed',
+  TASK_CREATED = 'task_created',
+  TASK_UPDATED = 'task_updated',
   TASK_DUE_SOON = 'task_due_soon',
   TASK_OVERDUE = 'task_overdue',
   COMMENT = 'comment',

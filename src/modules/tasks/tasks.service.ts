@@ -11,12 +11,15 @@ import { Attachment } from '../../entities/attachment.entity';
 import { Comment } from '../../entities/comment.entity';
 import { CommentReaction } from '../../entities/comment-reaction.entity';
 import { ActivityLog, ActivityAction, ActivityEntityType } from '../../entities/activity-log.entity';
+import { NotificationType } from '../../entities/notification.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { QueryTaskDto } from './dto/query-task.dto';
 import { CreateChecklistItemDto, UpdateChecklistItemDto } from './dto/checklist-item.dto';
 import { CreateReminderDto } from './dto/create-reminder.dto';
 import { CreateCommentDto, UpdateCommentDto } from './dto/comment.dto';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 
 @Injectable()
 export class TasksService {
@@ -41,6 +44,8 @@ export class TasksService {
     private reactionsRepository: Repository<CommentReaction>,
     @InjectRepository(ActivityLog)
     private activityLogsRepository: Repository<ActivityLog>,
+    private notificationsService: NotificationsService,
+    private notificationsGateway: NotificationsGateway,
   ) {}
 
   async findAll(query: QueryTaskDto): Promise<{
@@ -192,6 +197,25 @@ export class TasksService {
       projectId: project.id,
     });
 
+    // Notify project members about new task
+    if (project.members && project.members.length > 0) {
+      for (const member of project.members) {
+        if (member.id !== userId) { // Don't notify the creator
+          await this.notificationsService.create({
+            userId: member.id,
+            title: `Công việc mới trong dự án`,
+            message: `"${savedTask.title}" đã được tạo trong dự án "${project.name}"`,
+            type: NotificationType.TASK_CREATED,
+            link: `/tasks/${savedTask.id}`,
+          });
+          
+          // Notify via WebSocket
+          const unreadCount = await this.notificationsService.getUnreadCount(member.id);
+          this.notificationsGateway.notifyUnreadCount(member.id, unreadCount);
+        }
+      }
+    }
+
     return this.findOne(savedTask.id);
   }
 
@@ -201,6 +225,7 @@ export class TasksService {
     // Check permissions
     await this.checkTaskPermission(task, userId);
 
+    const oldStatus = task.status;
     Object.assign(task, updateTaskDto);
     const savedTask = await this.tasksRepository.save(task);
 
@@ -208,6 +233,33 @@ export class TasksService {
       taskTitle: savedTask.title,
       changes: updateTaskDto,
     });
+
+    // Trigger notifications for assignees when task status changes
+    if (oldStatus !== updateTaskDto.status && updateTaskDto.status) {
+      const statusMessages = {
+        'pending': 'Công việc đang chờ xử lý',
+        'in_progress': 'Công việc đang được xử lý',
+        'completed': 'Công việc đã hoàn thành',
+        'cancelled': 'Công việc đã bị hủy',
+      };
+
+      // Notify all assignees
+      if (savedTask.assignees && savedTask.assignees.length > 0) {
+        for (const assignee of savedTask.assignees) {
+          await this.notificationsService.create({
+            userId: assignee.id,
+            title: `Trạng thái công việc cập nhật`,
+            message: `"${savedTask.title}" - ${statusMessages[updateTaskDto.status] || updateTaskDto.status}`,
+            type: NotificationType.TASK_UPDATED,
+            link: `/tasks/${savedTask.id}`,
+          });
+          
+          // Notify via WebSocket
+          const unreadCount = await this.notificationsService.getUnreadCount(assignee.id);
+          this.notificationsGateway.notifyUnreadCount(assignee.id, unreadCount);
+        }
+      }
+    }
 
     return this.findOne(savedTask.id);
   }
@@ -256,6 +308,10 @@ export class TasksService {
       throw new BadRequestException('Some users are not members of the project');
     }
 
+    // Track old assignees to notify only new ones
+    const oldAssigneeIds = task.assignees.map(a => a.id);
+    const newAssignees = users.filter(u => !oldAssigneeIds.includes(u.id));
+
     task.assignees = users;
     await this.tasksRepository.save(task);
 
@@ -263,6 +319,21 @@ export class TasksService {
       taskTitle: task.title,
       assignedUsers: users.map(u => ({ id: u.id, name: u.name })),
     });
+
+    // Notify newly assigned users
+    for (const assignee of newAssignees) {
+      await this.notificationsService.create({
+        userId: assignee.id,
+        title: `Bạn được giao công việc mới`,
+        message: `"${task.title}" đã được giao cho bạn`,
+        type: NotificationType.TASK_ASSIGNED,
+        link: `/tasks/${taskId}`,
+      });
+      
+      // Notify via WebSocket
+      const unreadCount = await this.notificationsService.getUnreadCount(assignee.id);
+      this.notificationsGateway.notifyUnreadCount(assignee.id, unreadCount);
+    }
 
     return this.findOne(taskId);
   }

@@ -12,6 +12,7 @@ import { CommentReaction } from '../../entities/comment-reaction.entity';
 import { ActivityLog } from '../../entities/activity-log.entity';
 import { TasksController } from './tasks.controller';
 import { TasksService } from './tasks.service';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { TasksService } from './tasks.service';
       CommentReaction,
       ActivityLog,
     ]),
+    NotificationsModule,
   ],
   controllers: [TasksController],
   providers: [TasksService],
