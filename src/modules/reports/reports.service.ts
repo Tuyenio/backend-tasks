@@ -486,7 +486,7 @@ export class ReportsService {
     };
   }
 
-  async getTeamPerformance() {
+  async getTeamPerformance(startDate?: string, endDate?: string) {
     const users = await this.usersRepository
       .createQueryBuilder('user')
       .getMany();
@@ -494,19 +494,35 @@ export class ReportsService {
     const teamData = await Promise.all(
       users.map(async (user) => {
         // Count all assigned tasks using query builder
-        const assignedTasks = await this.tasksRepository
+        let assignedQuery = this.tasksRepository
           .createQueryBuilder('task')
           .leftJoinAndSelect('task.assignees', 'assignee')
-          .where('assignee.id = :userId', { userId: user.id })
-          .getCount();
+          .where('assignee.id = :userId', { userId: user.id });
+
+        if (startDate && endDate) {
+          assignedQuery = assignedQuery.andWhere('task.createdAt BETWEEN :startDate AND :endDate', {
+            startDate,
+            endDate,
+          });
+        }
+
+        const assignedTasks = await assignedQuery.getCount();
 
         // Count completed tasks
-        const completedTasks = await this.tasksRepository
+        let completedQuery = this.tasksRepository
           .createQueryBuilder('task')
           .leftJoinAndSelect('task.assignees', 'assignee')
           .where('assignee.id = :userId', { userId: user.id })
-          .andWhere('task.status = :status', { status: TaskStatus.DONE })
-          .getCount();
+          .andWhere('task.status = :status', { status: TaskStatus.DONE });
+
+        if (startDate && endDate) {
+          completedQuery = completedQuery.andWhere('task.createdAt BETWEEN :startDate AND :endDate', {
+            startDate,
+            endDate,
+          });
+        }
+
+        const completedTasks = await completedQuery.getCount();
 
         const completionRate = assignedTasks > 0 ? (completedTasks / assignedTasks) * 100 : 0;
 
@@ -525,27 +541,51 @@ export class ReportsService {
     return teamData.sort((a, b) => b.completionRate - a.completionRate);
   }
 
-  async getProjectsStatistics() {
+  async getProjectsStatistics(startDate?: string, endDate?: string) {
     const projects = await this.projectsRepository.find();
 
     const projectStats = await Promise.all(
       projects.map(async (project) => {
-        const totalTasks = await this.tasksRepository
+        let totalQuery = this.tasksRepository
           .createQueryBuilder('task')
-          .where('task.projectId = :projectId', { projectId: project.id })
-          .getCount();
+          .where('task.projectId = :projectId', { projectId: project.id });
 
-        const completedTasks = await this.tasksRepository
-          .createQueryBuilder('task')
-          .where('task.projectId = :projectId', { projectId: project.id })
-          .andWhere('task.status = :status', { status: TaskStatus.DONE })
-          .getCount();
+        if (startDate && endDate) {
+          totalQuery = totalQuery.andWhere('task.createdAt BETWEEN :startDate AND :endDate', {
+            startDate,
+            endDate,
+          });
+        }
 
-        const inProgressTasks = await this.tasksRepository
+        const totalTasks = await totalQuery.getCount();
+
+        let completedQuery = this.tasksRepository
           .createQueryBuilder('task')
           .where('task.projectId = :projectId', { projectId: project.id })
-          .andWhere('task.status = :status', { status: TaskStatus.IN_PROGRESS })
-          .getCount();
+          .andWhere('task.status = :status', { status: TaskStatus.DONE });
+
+        if (startDate && endDate) {
+          completedQuery = completedQuery.andWhere('task.createdAt BETWEEN :startDate AND :endDate', {
+            startDate,
+            endDate,
+          });
+        }
+
+        const completedTasks = await completedQuery.getCount();
+
+        let inProgressQuery = this.tasksRepository
+          .createQueryBuilder('task')
+          .where('task.projectId = :projectId', { projectId: project.id })
+          .andWhere('task.status = :status', { status: TaskStatus.IN_PROGRESS });
+
+        if (startDate && endDate) {
+          inProgressQuery = inProgressQuery.andWhere('task.createdAt BETWEEN :startDate AND :endDate', {
+            startDate,
+            endDate,
+          });
+        }
+
+        const inProgressTasks = await inProgressQuery.getCount();
 
         const completionRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 

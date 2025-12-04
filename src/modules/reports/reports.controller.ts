@@ -52,13 +52,19 @@ export class ReportsController {
 
   @Get('team-performance')
   @RequirePermissions('reports.view')
-  async getTeamPerformance() {
-    return this.reportsService.getTeamPerformance();
+  async getTeamPerformance(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.reportsService.getTeamPerformance(startDate, endDate);
   }
 
   @Get('projects-statistics')
   @RequirePermissions('reports.view')
-  async getProjectsStatistics() {
-    return this.reportsService.getProjectsStatistics();
+  async getProjectsStatistics(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.reportsService.getProjectsStatistics(startDate, endDate);
   }
 }
