@@ -96,8 +96,7 @@ export class ChatService {
       qb.andWhere('chat.type = :type', { type });
     }
 
-    qb.orderBy('lastMessage.createdAt', 'DESC', 'NULLS LAST')
-      .addOrderBy('chat.createdAt', 'DESC')
+    qb.orderBy('chat.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
 
