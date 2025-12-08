@@ -191,7 +191,13 @@ export class UsersService {
 
   async remove(id: string): Promise<void> {
     const user = await this.findOne(id);
-    await this.usersRepository.remove(user);
+    
+    // Clear roles relationship first
+    user.roles = [];
+    await this.usersRepository.save(user);
+    
+    // Then delete the user
+    await this.usersRepository.delete(id);
   }
 
   async assignRoles(userId: string, roleIds: string[]): Promise<User> {

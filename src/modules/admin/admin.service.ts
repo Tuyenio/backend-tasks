@@ -231,17 +231,18 @@ export class AdminService {
     const uptime = process.uptime();
 
     return {
-      status: dbConnected ? 'healthy' : 'unhealthy',
+      status: dbConnected ? 'healthy' : 'warning',
       database: {
-        connected: dbConnected,
+        status: dbConnected ? 'connected' : 'disconnected',
+        responseTime: 0,
       },
       server: {
         uptime: Math.floor(uptime),
         memoryUsage: {
-          rss: Math.floor(memoryUsage.rss / 1024 / 1024),
-          heapTotal: Math.floor(memoryUsage.heapTotal / 1024 / 1024),
           heapUsed: Math.floor(memoryUsage.heapUsed / 1024 / 1024),
-          external: Math.floor(memoryUsage.external / 1024 / 1024),
+          heapTotal: Math.floor(memoryUsage.heapTotal / 1024 / 1024),
+          external: Math.floor((memoryUsage.external || 0) / 1024 / 1024),
+          rss: Math.floor((memoryUsage.rss || 0) / 1024 / 1024),
         },
       },
       timestamp: new Date().toISOString(),
