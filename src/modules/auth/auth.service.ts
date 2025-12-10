@@ -24,6 +24,7 @@ import {
 } from './dto/auth.dto';
 import { randomBytes } from 'crypto';
 import { EmailService } from '../email/email.service';
+import { ChatService } from '../chat/chat.service';
 
 @Injectable()
 export class AuthService {
@@ -36,6 +37,7 @@ export class AuthService {
     private invitationsRepository: Repository<UserInvitation>,
     private jwtService: JwtService,
     private emailService: EmailService,
+    private chatService: ChatService,
   ) {}
 
   /**
@@ -129,6 +131,9 @@ export class AuthService {
     });
 
     await this.usersRepository.save(user);
+    
+      // Auto-create 1:1 chats with all existing users
+      await this.chatService.ensureDirectChatsForUser(user.id);
 
     // Send verification email
     try {
@@ -251,6 +256,9 @@ export class AuthService {
       if (!user) {
         throw new NotFoundException('User not found after creation');
       }
+      
+        // Auto-create 1:1 chats with all existing users
+        await this.chatService.ensureDirectChatsForUser(user.id);
     }
 
     // Generate JWT token
@@ -631,6 +639,9 @@ export class AuthService {
     });
 
     await this.usersRepository.save(user);
+
+    // Auto-create 1:1 chats with all existing users
+    await this.chatService.ensureDirectChatsForUser(user.id);
 
     // Mark invitation as accepted
     invitation.status = InvitationStatus.ACCEPTED;

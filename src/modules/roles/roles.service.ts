@@ -7,15 +7,58 @@ import { UpdateRoleDto } from './dto/update-role.dto';
 
 @Injectable()
 export class RolesService {
+  private readonly allPermissions = [
+    'projects.create',
+    'projects.update',
+    'projects.delete',
+    'projects.view',
+    'tasks.create',
+    'tasks.update',
+    'tasks.delete',
+    'tasks.view',
+    'tasks.assign',
+    'tasks.complete',
+    'notes.create',
+    'notes.update',
+    'notes.delete',
+    'notes.view',
+    'chat.create',
+    'chat.send',
+    'chat.delete',
+    'reports.view',
+    'reports.export',
+    'reports.create',
+    'users.view',
+    'users.manage',
+    'users.invite',
+    'roles.view',
+    'roles.manage',
+    'roles.create',
+    'roles.delete',
+    'settings.view',
+    'settings.manage',
+    'team.view',
+    'team.manage',
+  ];
+
   constructor(
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
   ) {}
 
+  private expandPermissions(role: Role): Role {
+    if (!role) return role;
+    if (role.permissions?.includes('*')) {
+      return { ...role, permissions: [...this.allPermissions] } as Role;
+    }
+    return role;
+  }
+
   async findAll(): Promise<Role[]> {
-    return this.rolesRepository.find({
+    const roles = await this.rolesRepository.find({
       order: { createdAt: 'DESC' },
     });
+    return roles.map((r) => this.expandPermissions(r));
   }
 
   async findOne(id: string): Promise<Role> {
@@ -28,7 +71,7 @@ export class RolesService {
       throw new NotFoundException(`Role with ID ${id} not found`);
     }
     
-    return role;
+    return this.expandPermissions(role);
   }
 
   async findByName(name: string): Promise<Role | null> {
@@ -90,7 +133,7 @@ export class RolesService {
 
   async getPermissions(roleId: string): Promise<string[]> {
     const role = await this.findOne(roleId);
-    return role.permissions;
+    return this.expandPermissions(role).permissions;
   }
 
   async hasPermission(roleId: string, permission: string): Promise<boolean> {
@@ -105,38 +148,6 @@ export class RolesService {
   }
 
   async getAvailablePermissions(): Promise<string[]> {
-    return [
-      'projects.create',
-      'projects.update',
-      'projects.delete',
-      'projects.view',
-      'tasks.create',
-      'tasks.update',
-      'tasks.delete',
-      'tasks.view',
-      'tasks.assign',
-      'tasks.complete',
-      'notes.create',
-      'notes.update',
-      'notes.delete',
-      'notes.view',
-      'chat.create',
-      'chat.send',
-      'chat.delete',
-      'reports.view',
-      'reports.export',
-      'reports.create',
-      'users.view',
-      'users.manage',
-      'users.invite',
-      'roles.view',
-      'roles.manage',
-      'roles.create',
-      'roles.delete',
-      'settings.view',
-      'settings.manage',
-      'team.view',
-      'team.manage',
-    ];
+    return [...this.allPermissions];
   }
 }

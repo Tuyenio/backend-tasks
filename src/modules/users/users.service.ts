@@ -8,6 +8,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
 import { EmailService } from '../email/email.service';
+import { ChatService } from '../chat/chat.service';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -20,6 +21,7 @@ export class UsersService {
     @InjectRepository(UserSettings)
     private userSettingsRepository: Repository<UserSettings>,
     private emailService: EmailService,
+    private chatService: ChatService,
   ) {}
 
   async findAll(query: QueryUserDto): Promise<{ data: User[]; total: number; page: number; limit: number }> {
@@ -146,6 +148,9 @@ export class UsersService {
     });
 
     const savedUser = await this.usersRepository.save(user);
+
+    // Auto-create 1:1 chats with all existing users
+    await this.chatService.ensureDirectChatsForUser(savedUser.id);
 
     // Send welcome email with credentials
     try {

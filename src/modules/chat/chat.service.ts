@@ -5,11 +5,11 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
-import { Chat } from '../../entities/chat.entity';
+import { Repository, In, Not } from 'typeorm';
+import { Chat, ChatType } from '../../entities/chat.entity';
 import { Message } from '../../entities/message.entity';
 import { User } from '../../entities/user.entity';
-import { CreateChatDto, ChatType } from './dto/create-chat.dto';
+import { CreateChatDto } from './dto/create-chat.dto';
 import { UpdateChatDto } from './dto/update-chat.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { QueryChatDto } from './dto/query-chat.dto';
@@ -326,5 +326,41 @@ export class ChatService {
     }
 
     return unreadCount;
+  }
+
+  /**
+   * Ensure the given user has direct (1:1) chats with all existing users.
+   * Creates missing direct chats; does not duplicate existing ones.
+   */
+  async ensureDirectChatsForUser(userId: string): Promise<void> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Fetch all other users
+    const others = await this.usersRepository.find({ where: { id: Not(userId) } });
+    if (!others.length) return;
+
+    for (const other of others) {
+      const pairIds = [userId, other.id];
+
+      const existingChat = await this.chatsRepository
+        .createQueryBuilder('chat')
+        .leftJoin('chat.members', 'member')
+        .where('chat.type = :type', { type: ChatType.DIRECT })
+        .andWhere('member.id IN (:...ids)', { ids: pairIds })
+        .groupBy('chat.id')
+        .having('COUNT(DISTINCT member.id) = :count', { count: pairIds.length })
+        .getOne();
+
+      if (existingChat) {
+        continue;
+      }
+
+      const chat = this.chatsRepository.create({ type: ChatType.DIRECT });
+      chat.members = [user, other];
+      await this.chatsRepository.save(chat);
+    }
   }
 }
