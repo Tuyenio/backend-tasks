@@ -12,13 +12,16 @@ import { SearchService } from './search.service';
 import { GlobalSearchDto } from './dto/global-search.dto';
 import { SearchSuggestionsDto } from './dto/search-suggestions.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../../common/guards/permissions.guard';
+import { RequirePermissions } from '../../common/decorators/permissions.decorator';
 
 @Controller('search')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class SearchController {
   constructor(private readonly searchService: SearchService) {}
 
   @Get()
+  @RequirePermissions('search.use')
   async globalSearch(@Query() dto: GlobalSearchDto, @Request() req) {
     return this.searchService.globalSearch(dto, req.user.id);
   }

@@ -39,6 +39,12 @@ export class RolesService {
     'settings.manage',
     'team.view',
     'team.manage',
+    'notifications.view',
+    'notifications.manage',
+    'search.use',
+    'upload.create',
+    'upload.view',
+    'upload.delete',
   ];
 
   constructor(

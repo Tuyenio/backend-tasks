@@ -170,7 +170,6 @@ async function seed() {
           'notes.update',
           'notes.view',
           'chat.send',
-          'reports.view',
           'users.view',
           'team.view',
         ],

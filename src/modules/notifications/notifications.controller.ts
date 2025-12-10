@@ -15,9 +15,11 @@ import { NotificationsGateway } from './notifications.gateway';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { QueryNotificationDto } from './dto/query-notification.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../../common/guards/permissions.guard';
+import { RequirePermissions } from '../../common/decorators/permissions.decorator';
 
 @Controller('notifications')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class NotificationsController {
   constructor(
     private readonly notificationsService: NotificationsService,
@@ -73,6 +75,7 @@ export class NotificationsController {
   }
 
   @Get()
+  @RequirePermissions('notifications.view')
   findAll(@Query() query: QueryNotificationDto, @Request() req) {
     return this.notificationsService.findAll(query, req.user.id);
   }
