@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsArray } from 'class-validator';
 
 export class UpdateNoteDto {
   @IsOptional()
@@ -12,4 +12,8 @@ export class UpdateNoteDto {
   @IsOptional()
   @IsBoolean()
   isPinned?: boolean;
+
+  @IsOptional()
+  @IsString()
+  todos?: string; // JSON stringified array of todo items
 }

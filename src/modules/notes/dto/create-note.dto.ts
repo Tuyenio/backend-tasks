@@ -16,4 +16,8 @@ export class CreateNoteDto {
   @IsArray()
   @IsUUID('4', { each: true })
   sharedWithUserIds?: string[];
+
+  @IsOptional()
+  @IsString()
+  todos?: string; // JSON stringified array of todo items
 }

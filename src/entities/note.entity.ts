@@ -26,6 +26,9 @@ export class Note {
   @Column({ type: 'simple-array', nullable: true })
   tags: string[];
 
+  @Column({ type: 'text', nullable: true })
+  todos: string; // JSON stringified array of todo items
+
   @Column({ type: 'boolean', default: false })
   isPinned: boolean;
 
