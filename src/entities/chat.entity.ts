@@ -9,6 +9,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { User } from './user.entity';
+import { Message } from './message.entity';
 
 export enum ChatType {
   GROUP = 'group',
