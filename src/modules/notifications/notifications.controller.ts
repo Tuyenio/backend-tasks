@@ -119,7 +119,7 @@ export class NotificationsController {
     // Update unread count to 0
     this.notificationsGateway.notifyUnreadCount(req.user.id, 0);
 
-    return { message: 'All notifications marked as read' };
+    return { message: 'Tất cả thông báo được đánh dấu là đã đọc' };
   }
 
   @Patch('read-multiple')
@@ -148,7 +148,7 @@ export class NotificationsController {
     );
     this.notificationsGateway.notifyUnreadCount(req.user.id, unreadCount);
 
-    return { message: 'Notification deleted successfully' };
+    return { message: 'Thông báo đã được xóa thành công' };
   }
 
   @Delete()
@@ -158,6 +158,6 @@ export class NotificationsController {
     // Update unread count to 0
     this.notificationsGateway.notifyUnreadCount(req.user.id, 0);
 
-    return { message: 'All notifications deleted successfully' };
+    return { message: 'Tất cả thông báo đã được xóa thành công' };
   }
 }

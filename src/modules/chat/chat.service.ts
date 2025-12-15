@@ -31,7 +31,7 @@ export class ChatService {
       where: { id: userId },
     });
     if (!creator) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tìm thấy');
     }
 
     // Validate participants
@@ -43,7 +43,7 @@ export class ChatService {
       uniqueParticipantIds.length !== 2
     ) {
       throw new BadRequestException(
-        'Direct chat must have exactly 2 participants',
+        'Chat trực tiếp phải có đúng 2 người tham gia',
       );
     }
 
@@ -52,7 +52,7 @@ export class ChatService {
     });
 
     if (participants.length !== uniqueParticipantIds.length) {
-      throw new BadRequestException('One or more participants not found');
+      throw new BadRequestException('Một hoặc nhiều người tham gia không tìm thấy');
     }
 
     // Check if direct chat already exists
@@ -121,13 +121,13 @@ export class ChatService {
     });
 
     if (!chat) {
-      throw new NotFoundException('Chat not found');
+      throw new NotFoundException('Chat không tìm thấy');
     }
 
     // Check if user is a participant
     const isParticipant = chat.members.some((p) => p.id === userId);
     if (!isParticipant) {
-      throw new ForbiddenException('You are not a participant of this chat');
+      throw new ForbiddenException('Bạn không phải là người tham gia trực tiếp');
     }
 
     return chat;
@@ -142,7 +142,7 @@ export class ChatService {
 
     // Only group chats can be updated
     if (chat.type === ChatType.DIRECT) {
-      throw new BadRequestException('Cannot update direct chat');
+      throw new BadRequestException('Không thể cập nhật chat trực tiếp');
     }
 
     Object.assign(chat, updateChatDto);
@@ -164,7 +164,7 @@ export class ChatService {
 
     // Only group chats can add participants
     if (chat.type === ChatType.DIRECT) {
-      throw new BadRequestException('Cannot add participants to direct chat');
+      throw new BadRequestException('Không thể thêm người tham gia vào chat trực tiếp');
     }
 
     const newParticipants = await this.usersRepository.findBy({
@@ -172,7 +172,7 @@ export class ChatService {
     });
 
     if (newParticipants.length !== participantIds.length) {
-      throw new BadRequestException('One or more users not found');
+      throw new BadRequestException('Một hoặc nhiều người dùng không tìm thấy');
     }
 
     // Merge with existing participants
@@ -194,13 +194,13 @@ export class ChatService {
     // Only group chats can remove participants
     if (chat.type === ChatType.DIRECT) {
       throw new BadRequestException(
-        'Cannot remove participants from direct chat',
+        'Không thể xoá người tham gia khỏi chat trực tiếp',
       );
     }
 
     // Only the participant themselves can leave
     if (participantId !== userId) {
-      throw new ForbiddenException('You can only remove yourself from chat');
+      throw new ForbiddenException('Bạn chỉ có thể xóa chính mình khỏi chat');
     }
 
     chat.members = chat.members.filter((p) => p.id !== participantId);
@@ -218,7 +218,7 @@ export class ChatService {
       where: { id: userId },
     });
     if (!sender) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tìm thấy');
     }
 
     const message = this.messagesRepository.create({
@@ -265,18 +265,18 @@ export class ChatService {
     });
 
     if (!message) {
-      throw new NotFoundException('Message not found');
+      throw new NotFoundException('Tin nhắn không tìm thấy');
     }
 
     // Check if user is a participant
     const isParticipant = message.chat.members.some((p) => p.id === userId);
     if (!isParticipant) {
-      throw new ForbiddenException('You are not a participant of this chat');
+      throw new ForbiddenException('Bạn không phải là người tham gia trực tiếp');
     }
 
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tÌm thấy');
     }
 
     // Add user to readBy if not already there
@@ -336,7 +336,7 @@ export class ChatService {
   async ensureDirectChatsForUser(userId: string): Promise<void> {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tÌm thấy');
     }
 
     // Fetch all other users

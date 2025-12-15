@@ -164,6 +164,7 @@ export class TasksService {
       where: { id },
       relations: [
         'project',
+        'project.members',
         'createdBy',
         'assignedBy',
         'assignees',
@@ -179,7 +180,7 @@ export class TasksService {
     });
 
     if (!task) {
-      throw new NotFoundException(`Task with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy task với ID ${id}`);
     }
 
     return task;
@@ -188,7 +189,7 @@ export class TasksService {
   async create(createTaskDto: CreateTaskDto, userId: string): Promise<Task> {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Không tìm thấy người dùng');
     }
 
     const project = await this.projectsRepository.findOne({
@@ -196,13 +197,13 @@ export class TasksService {
       relations: ['members'],
     });
     if (!project) {
-      throw new NotFoundException('Project not found');
+      throw new NotFoundException('Không tìm thấy dự án');
     }
 
     // Check if user is project member
     const isMember = project.members.some((m) => m.id === userId);
     if (!isMember) {
-      throw new ForbiddenException('You are not a member of this project');
+      throw new ForbiddenException('Bạn không phải là thành viên của dự án này');
     }
 
     const task = this.tasksRepository.create({
@@ -358,7 +359,7 @@ export class TasksService {
       where: { id: In(userIds) },
     });
     if (users.length !== userIds.length) {
-      throw new BadRequestException('Some users not found');
+      throw new BadRequestException('Một số người dùng không tìm thấy');
     }
 
     // Check if all users are project members OR are already assignees OR are the task creator
@@ -376,7 +377,7 @@ export class TasksService {
 
     if (invalidUsers.length > 0) {
       throw new BadRequestException(
-        'Some users are not members of the project',
+        'Một số người dùng không phải là thành viên của dự án',
       );
     }
 
@@ -454,7 +455,7 @@ export class TasksService {
 
     const tags = await this.tagsRepository.find({ where: { id: In(tagIds) } });
     if (tags.length !== tagIds.length) {
-      throw new BadRequestException('Some tags not found');
+      throw new BadRequestException('Một số tag không tìm thấy');
     }
 
     const existingTagIds = task.tags.map((t) => t.id);
@@ -510,7 +511,7 @@ export class TasksService {
       where: { id: itemId, task: { id: taskId } },
     });
     if (!item) {
-      throw new NotFoundException('Checklist item not found');
+      throw new NotFoundException('Mục danh sách kiểm tra không tìm thấy');
     }
 
     Object.assign(item, dto);
@@ -529,7 +530,7 @@ export class TasksService {
       where: { id: itemId, task: { id: taskId } },
     });
     if (!item) {
-      throw new NotFoundException('Checklist item not found');
+      throw new NotFoundException('Mục danh sách kiểm tra không tìm thấy');
     }
 
     await this.checklistItemsRepository.remove(item);
@@ -546,7 +547,7 @@ export class TasksService {
 
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tìm thấy');
     }
 
     const reminder = this.remindersRepository.create({
@@ -571,7 +572,7 @@ export class TasksService {
       where: { id: reminderId, task: { id: taskId } },
     });
     if (!reminder) {
-      throw new NotFoundException('Reminder not found');
+      throw new NotFoundException('Không tìm thấy nhắc nhở');
     }
 
     await this.remindersRepository.remove(reminder);
@@ -581,7 +582,7 @@ export class TasksService {
   async getComments(taskId: string): Promise<Comment[]> {
     const task = await this.tasksRepository.findOne({ where: { id: taskId } });
     if (!task) {
-      throw new NotFoundException('Task not found');
+      throw new NotFoundException('Task không tÌm thấy');
     }
 
     return this.commentsRepository.find({
@@ -611,7 +612,7 @@ export class TasksService {
         where: { id: userId },
       });
       if (!user) {
-        throw new NotFoundException('User not found');
+        throw new NotFoundException('Không tìm thấy người dùng');
       }
       console.log(`[addComment] User found: ${user.id}`);
 
@@ -648,7 +649,7 @@ export class TasksService {
       });
 
       if (!result) {
-        throw new NotFoundException('Comment not found after creation');
+        throw new NotFoundException('Không tìm thấy bình luận sau khi tạo');
       }
 
       console.log(`[addComment] Comment returned successfully: ${result.id}`);
@@ -671,11 +672,11 @@ export class TasksService {
     });
 
     if (!comment) {
-      throw new NotFoundException('Comment not found');
+      throw new NotFoundException('Không tìm thấy bình luận');
     }
 
     if (comment.author.id !== userId) {
-      throw new ForbiddenException('You can only edit your own comments');
+      throw new ForbiddenException('Bạn chỉ có thể chỉnh sửa bình luận của riêng mình');
     }
 
     comment.content = dto.content;
@@ -693,11 +694,11 @@ export class TasksService {
     });
 
     if (!comment) {
-      throw new NotFoundException('Comment not found');
+      throw new NotFoundException('Không tìm thấy bình luận');
     }
 
     if (comment.author.id !== userId) {
-      throw new ForbiddenException('You can only delete your own comments');
+      throw new ForbiddenException('Bạn chỉ có thể xóa bình luận của riêng mình');
     }
 
     await this.commentsRepository.remove(comment);
@@ -720,12 +721,12 @@ export class TasksService {
       where: { id: commentId },
     });
     if (!comment) {
-      throw new NotFoundException('Comment not found');
+      throw new NotFoundException('Không tìm thấy bình luận');
     }
 
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Không tìm thấy người dùng');
     }
 
     // Check if user already reacted with this emoji
@@ -755,11 +756,11 @@ export class TasksService {
     });
 
     if (!reaction) {
-      throw new NotFoundException('Reaction not found');
+      throw new NotFoundException('Không tìm thấy phản ứng');
     }
 
     if (reaction.user.id !== userId) {
-      throw new ForbiddenException('You can only remove your own reactions');
+      throw new ForbiddenException('Bạn chỉ có thể xóa phản ứng của riêng mình');
     }
 
     await this.reactionsRepository.remove(reaction);
@@ -812,7 +813,7 @@ export class TasksService {
     });
 
     if (!project) {
-      throw new NotFoundException('Project not found');
+      throw new NotFoundException('Không tìm thấy dự án');
     }
 
     // Allow: project owner, project member, task creator, or task assignee
@@ -828,7 +829,7 @@ export class TasksService {
       !isTaskAssignee
     ) {
       throw new ForbiddenException(
-        'You do not have permission to modify this task',
+        'Bạn không có quyền chỉnh sửa task này',
       );
     }
   }
@@ -839,7 +840,7 @@ export class TasksService {
   ): Promise<ActivityLog[]> {
     const task = await this.tasksRepository.findOne({ where: { id: taskId } });
     if (!task) {
-      throw new NotFoundException('Task not found');
+      throw new NotFoundException('Task không tÌm thấy');
     }
 
     return this.activityLogsRepository.find({

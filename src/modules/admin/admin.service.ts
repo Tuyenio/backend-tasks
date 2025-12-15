@@ -61,7 +61,7 @@ export class AdminService {
     });
 
     if (!setting) {
-      throw new NotFoundException(`Setting with key '${key}' not found`);
+      throw new NotFoundException(`Cài đặt với khóa '${key}' không tìm thấy`);
     }
 
     return setting;
@@ -381,7 +381,7 @@ export class AdminService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tìm thấy');
     }
 
     // Cannot lock super_admin
@@ -389,7 +389,7 @@ export class AdminService {
       (role) => role.name === 'super_admin',
     );
     if (isSuperAdmin) {
-      throw new BadRequestException('Cannot lock super admin account');
+      throw new BadRequestException('Không thể khóa tài khoản super admin');
     }
 
     user.isLocked = true;
@@ -400,7 +400,7 @@ export class AdminService {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tÌm thấy');
     }
 
     user.isLocked = false;
@@ -414,14 +414,14 @@ export class AdminService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tìm thấy');
     }
 
     // Fetch roles
     const roles = await this.rolesRepository.findByIds(roleIds);
 
     if (roles.length !== roleIds.length) {
-      throw new NotFoundException('One or more roles not found');
+      throw new NotFoundException('Một hoặc nhiều vai trò không tìm thấy');
     }
 
     user.roles = roles;

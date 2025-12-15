@@ -30,7 +30,7 @@ export class UploadController {
     @Request() req,
   ) {
     if (!file) {
-      throw new BadRequestException('No file uploaded');
+      throw new BadRequestException('Không có tệp nào được tải lên');
     }
     return this.uploadService.uploadAvatar(file, req.user.id);
   }
@@ -45,7 +45,7 @@ export class UploadController {
     @Request() req,
   ) {
     if (!file) {
-      throw new BadRequestException('No file uploaded');
+      throw new BadRequestException('Không có tệp nào được tải lên');
     }
     return this.uploadService.uploadFile(
       file,
@@ -64,7 +64,7 @@ export class UploadController {
     @Request() req,
   ) {
     if (!files || files.length === 0) {
-      throw new BadRequestException('No files uploaded');
+      throw new BadRequestException('Không có tệp nào được tải lên');
     }
     return this.uploadService.uploadMultipleFiles(
       files,

@@ -134,7 +134,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new ConflictException('Email already registered');
+      throw new ConflictException('Email đã được đăng ký');
     }
 
     // Hash password
@@ -146,7 +146,7 @@ export class AuthService {
     });
 
     if (!memberRole) {
-      throw new NotFoundException('Default role not found');
+      throw new NotFoundException('Vai trò mặc định không tìm thấy');
     }
 
     // Generate verification token
@@ -189,7 +189,7 @@ export class AuthService {
 
     return {
       message:
-        'Registration successful. Please check your email to verify your account.',
+        'Đăng ký thành công. Vui lòng kiểm tra email của bạn để xác thực tài khoản.',
       user: this.formatUserResponse(user),
     };
   }
@@ -204,25 +204,25 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Thông tin đăng nhập không hợp lệ');
     }
 
     // Check password
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Thông tin đăng nhập không hợp lệ');
     }
 
     // Check if user is active
     if (!user.isActive) {
-      throw new UnauthorizedException('Account is deactivated');
+      throw new UnauthorizedException('Tài khoản đã bị vô hiệu hóa');
     }
 
     // Check if user is locked
     if (user.isLocked) {
       throw new UnauthorizedException(
-        'Account has been locked. Please contact administrator.',
+        'Tài khoản đã bị khóa. Vui lòng liên hệ với quản trị viên.',
       );
     }
 
@@ -274,7 +274,7 @@ export class AuthService {
       });
 
       if (!memberRole) {
-        throw new NotFoundException('Member role not found');
+        throw new NotFoundException('Vai trò thành viên không tìm thấy');
       }
 
       user = this.usersRepository.create({
@@ -297,7 +297,7 @@ export class AuthService {
       });
 
       if (!user) {
-        throw new NotFoundException('User not found after creation');
+        throw new NotFoundException('Không tìm thấy người dùng sau khi tạo');
       }
 
       // Queue chat creation asynchronously (don't await, avoid N² performance issue)
@@ -333,7 +333,7 @@ export class AuthService {
     if (!user) {
       // Don't reveal if user exists
       return {
-        message: 'If the email exists, a reset link has been sent',
+        message: 'Nếu email tồn tại, một liên kết đặt lại sẽ được gửi',
       };
     }
 
@@ -360,7 +360,7 @@ export class AuthService {
     }
 
     return {
-      message: 'If the email exists, a reset link has been sent',
+      message: 'Nếu email tồn tại, một liên kết đặt lại sẽ được gửi',
     };
   }
 
@@ -372,12 +372,12 @@ export class AuthService {
     });
 
     if (!user || !user.resetPasswordExpires) {
-      throw new BadRequestException('Invalid or expired reset token');
+      throw new BadRequestException('Mã đặt lại không hợp lệ hoặc đã hết hạn');
     }
 
     // Check if token expired
     if (user.resetPasswordExpires < new Date()) {
-      throw new BadRequestException('Reset token has expired');
+      throw new BadRequestException('Mã đặt lại đã hết hạn');
     }
 
     // Hash new password
@@ -390,7 +390,7 @@ export class AuthService {
     await this.usersRepository.save(user);
 
     return {
-      message: 'Password reset successful',
+      message: 'Đặt lại mật khẩu thành công',
     };
   }
 
@@ -402,14 +402,14 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Không tìm thấy người dùng');
     }
 
     // Verify old password
     const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
 
     if (!isPasswordValid) {
-      throw new BadRequestException('Current password is incorrect');
+      throw new BadRequestException('Mật khẩu hiện tại không đúng');
     }
 
     // Hash new password
@@ -429,7 +429,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new BadRequestException('Invalid verification token');
+      throw new BadRequestException('Mã xác thực không hợp lệ');
     }
 
     user.emailVerified = true;
@@ -449,12 +449,12 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tìm thấy');
     }
 
     // Check if user is locked
     if (user.isLocked) {
-      throw new UnauthorizedException('Account has been locked');
+      throw new UnauthorizedException('Tài khoản đã bị khóa');
     }
 
     return this.formatUserResponse(user);
@@ -466,7 +466,7 @@ export class AuthService {
     });
 
     if (!user || !user.isActive) {
-      throw new UnauthorizedException('Invalid user');
+      throw new UnauthorizedException('Người dùng không hợp lệ');
     }
 
     const payload = { sub: user.id, email: user.email };
@@ -486,7 +486,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new ConflictException('User with this email already exists');
+      throw new ConflictException('Người dùng với email này đã tồn tại');
     }
 
     // Check if there's a pending invitation
@@ -502,7 +502,7 @@ export class AuthService {
           where: { id: inviterId },
         });
         if (!inviterForResend) {
-          throw new NotFoundException('Inviter not found');
+          throw new NotFoundException('Không tìm thấy người mời');
         }
 
         // Get role names for existing invite
@@ -534,7 +534,7 @@ export class AuthService {
         };
       } catch (error) {
         this.logger.error('Failed to resend invitation email:', error);
-        throw new ConflictException('Failed to resend invitation');
+        throw new ConflictException('Không thể gửi lại lời mời');
       }
     }
 
@@ -549,7 +549,7 @@ export class AuthService {
     });
 
     if (!inviter) {
-      throw new NotFoundException('Inviter not found');
+      throw new NotFoundException('Người mời không tìm thấy');
     }
 
     // Validate roles
@@ -557,7 +557,7 @@ export class AuthService {
     if (roleIds && roleIds.length > 0) {
       roles = await this.rolesRepository.findByIds(roleIds);
       if (roles.length !== roleIds.length) {
-        throw new BadRequestException('Some roles not found');
+        throw new BadRequestException('Một số vai trò không tìm thấy');
       }
     } else {
       // Default to member role
@@ -624,7 +624,7 @@ export class AuthService {
       const payload = this.jwtService.verify(token);
 
       if (payload.type !== 'invite') {
-        throw new BadRequestException('Invalid token type');
+        throw new BadRequestException('Loại mã không hợp lệ');
       }
 
       // Check invitation in database
@@ -634,19 +634,19 @@ export class AuthService {
       });
 
       if (!invitation) {
-        throw new NotFoundException('Invitation not found');
+        throw new NotFoundException('Lời mời không tìm thấy');
       }
 
       if (invitation.status !== InvitationStatus.PENDING) {
         throw new BadRequestException(
-          'Invitation has already been used or cancelled',
+          'Lời mời đã được sử dụng hoặc bị hủy',
         );
       }
 
       if (invitation.expiresAt < new Date()) {
         invitation.status = InvitationStatus.EXPIRED;
         await this.invitationsRepository.save(invitation);
-        throw new BadRequestException('Invitation has expired');
+        throw new BadRequestException('Lời mời đã hết hạn');
       }
 
       // Check if user already exists
@@ -655,7 +655,7 @@ export class AuthService {
       });
 
       if (existingUser) {
-        throw new ConflictException('User already exists');
+        throw new ConflictException('Người dùng đã tồn tại');
       }
 
       // Get role names
@@ -672,7 +672,7 @@ export class AuthService {
       };
     } catch (error) {
       if (error.name === 'TokenExpiredError') {
-        throw new BadRequestException('Invitation token has expired');
+        throw new BadRequestException('Token lời mời đã hết hạn');
       }
       throw error;
     }
@@ -689,7 +689,7 @@ export class AuthService {
     });
 
     if (!invitation) {
-      throw new NotFoundException('Invitation not found');
+      throw new NotFoundException('Lời mời không tìm thấy');
     }
 
     // Hash password

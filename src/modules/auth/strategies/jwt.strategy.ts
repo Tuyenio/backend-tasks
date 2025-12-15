@@ -22,7 +22,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   ) {
     const jwtSecret = configService.get<string>('JWT_SECRET');
     if (!jwtSecret) {
-      throw new Error('JWT_SECRET environment variable is not configured');
+      throw new Error('Biến môi trường JWT_SECRET chưa được cấu hình');
     }
 
     super({
@@ -39,11 +39,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
 
     if (!user || !user.isActive) {
-      throw new UnauthorizedException('User not found or inactive');
+      throw new UnauthorizedException('Người dùng không tìm thấy hoặc vô hiệu hóa');
     }
 
     if (user.isLocked) {
-      throw new UnauthorizedException('Account has been locked');
+      throw new UnauthorizedException('Tài khoản đã bị khóa');
     }
 
     // DEBUG: Log user roles and permissions

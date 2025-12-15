@@ -114,7 +114,7 @@ export class ProjectsService {
     });
 
     if (!project) {
-      throw new NotFoundException(`Project with ID ${id} not found`);
+      throw new NotFoundException(`Dự án với ID ${id} không tÌm thấy`);
     }
 
     return project;
@@ -126,7 +126,7 @@ export class ProjectsService {
   ): Promise<Project> {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Không tìm thấy người dùng');
     }
 
     const project = this.projectsRepository.create({
@@ -172,7 +172,7 @@ export class ProjectsService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tÌm thấy');
     }
 
     // Check if user has permission (super_admin, admin, or is member/creator)
@@ -184,7 +184,7 @@ export class ProjectsService {
 
     if (!hasAdminRole && !isMember && !isCreator) {
       throw new ForbiddenException(
-        'You are not authorized to update this project',
+        'Bạn không có quyền cập nhật dự án này',
       );
     }
 
@@ -212,7 +212,7 @@ export class ProjectsService {
     // Only creator can delete project
     if (project.createdBy.id !== userId) {
       throw new ForbiddenException(
-        'Only the project creator can delete this project',
+        'Chỉ có người tạo dự án mới có thể xóa dự án này',
       );
     }
 
@@ -244,7 +244,7 @@ export class ProjectsService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tÌm thấy');
     }
 
     // Check if user has permission (super_admin, admin, or is member/creator)
@@ -256,7 +256,7 @@ export class ProjectsService {
 
     if (!hasAdminRole && !isMember && !isCreator) {
       throw new ForbiddenException(
-        'You are not authorized to add members to this project',
+        'Bạn không có quyền thêm thành viên vào dự án này',
       );
     }
 
@@ -265,7 +265,7 @@ export class ProjectsService {
     });
 
     if (users.length !== userIds.length) {
-      throw new NotFoundException('Some users were not found');
+      throw new NotFoundException('Một số người dùng không tìm thấy');
     }
 
     // Add only new members
@@ -305,7 +305,7 @@ export class ProjectsService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tÌm thấy');
     }
 
     // Check if user has permission (super_admin, admin, or is creator)
@@ -316,14 +316,14 @@ export class ProjectsService {
 
     if (!hasAdminRole && !isCreator) {
       throw new ForbiddenException(
-        'Only the project creator or admin can remove members',
+        'Chỉ có người tạo dự án hoặc quản trị viên mới có thể xoá thành viên',
       );
     }
 
     // Cannot remove creator
     if (memberId === project.createdBy.id) {
       throw new ForbiddenException(
-        'Cannot remove the project creator from members',
+        'Không thể xoá người tạo dự án khỏi thành viên',
       );
     }
 
@@ -362,7 +362,7 @@ export class ProjectsService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tÌm thấy');
     }
 
     // Check if user has permission (super_admin, admin, or is member/creator)
@@ -374,7 +374,7 @@ export class ProjectsService {
 
     if (!hasAdminRole && !isMember && !isCreator) {
       throw new ForbiddenException(
-        'You are not authorized to add tags to this project',
+        'Bạn không có quyền thêm tag vào dự án này',
       );
     }
 
@@ -383,7 +383,7 @@ export class ProjectsService {
     });
 
     if (tags.length !== tagIds.length) {
-      throw new NotFoundException('Some tags were not found');
+      throw new NotFoundException('Một số tag không tÌm thấy');
     }
 
     // Add only new tags
@@ -422,7 +422,7 @@ export class ProjectsService {
 
     if (!isMember && !isCreator) {
       throw new ForbiddenException(
-        'You are not authorized to remove tags from this project',
+        'Bạn không có quyền xoá tag khỏi dự án này',
       );
     }
 

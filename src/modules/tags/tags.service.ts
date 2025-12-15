@@ -26,7 +26,7 @@ export class TagsService {
     const tag = await this.tagsRepository.findOne({ where: { id } });
 
     if (!tag) {
-      throw new NotFoundException(`Tag with ID ${id} not found`);
+      throw new NotFoundException(`Tag với ID ${id} không tìm thấy`);
     }
 
     return tag;
@@ -41,7 +41,7 @@ export class TagsService {
     const existingTag = await this.findByName(createTagDto.name);
     if (existingTag) {
       throw new ConflictException(
-        `Tag with name ${createTagDto.name} already exists`,
+        `Tag với tên ${createTagDto.name} đã tồn tại`,
       );
     }
 

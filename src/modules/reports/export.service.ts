@@ -57,7 +57,7 @@ export class ExportService {
         mimeType: 'text/csv;charset=utf-8',
       };
     } catch (error) {
-      throw new Error(`CSV generation failed: ${error.message}`);
+      throw new Error(`Không thể tạo CSV: ${error.message}`);
     }
   }
 

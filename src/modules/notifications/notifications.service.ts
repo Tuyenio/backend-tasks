@@ -27,7 +27,7 @@ export class NotificationsService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tìm thấy');
     }
 
     const notification = this.notificationsRepository.create({
@@ -87,12 +87,12 @@ export class NotificationsService {
     });
 
     if (!notification) {
-      throw new NotFoundException('Notification not found');
+      throw new NotFoundException('Thông báo không tìm thấy');
     }
 
     if (notification.user.id !== userId) {
       throw new ForbiddenException(
-        'You do not have access to this notification',
+        'Bạn không có quyền truy cập thông báo này',
       );
     }
 

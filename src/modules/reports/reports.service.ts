@@ -61,7 +61,7 @@ export class ReportsService {
         reportTitle = 'Performance Report';
         break;
       default:
-        throw new Error('Invalid report type');
+        throw new Error('Loại báo cáo không hợp lệ');
     }
 
     if (format === ExportFormat.CSV) {
@@ -322,7 +322,7 @@ export class ReportsService {
         filename: `${title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`,
       };
     } catch (error) {
-      throw new Error(`Failed to generate CSV report: ${error.message}`);
+      throw new Error(`Không thể tạo báo cáo CSV: ${error.message}`);
     }
   }
 
@@ -384,7 +384,7 @@ export class ReportsService {
       case ChartType.TASK_COMPLETION_TREND:
         return this.getTaskCompletionTrendChart(startDate, endDate);
       default:
-        throw new Error('Invalid chart type');
+        throw new Error('Loại biểu đồ không hợp lệ');
     }
   }
 

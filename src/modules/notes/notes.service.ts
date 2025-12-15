@@ -30,7 +30,7 @@ export class NotesService {
       where: { id: userId },
     });
     if (!creator) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tÌm thấy');
     }
 
     const note = this.notesRepository.create({
@@ -119,7 +119,7 @@ export class NotesService {
     });
 
     if (!note) {
-      throw new NotFoundException('Note not found');
+      throw new NotFoundException('Không tìm thấy ghi chú');
     }
 
     // Check if user has access to this note
@@ -128,7 +128,7 @@ export class NotesService {
       note.sharedWith?.some((user) => user.id === userId);
 
     if (!hasAccess) {
-      throw new ForbiddenException('You do not have access to this note');
+      throw new ForbiddenException('Bạn không có quyền truy cập ghi chú này');
     }
 
     return note;
@@ -143,7 +143,7 @@ export class NotesService {
 
     // Only creator can update the note
     if (note.createdBy.id !== userId) {
-      throw new ForbiddenException('Only the creator can update this note');
+      throw new ForbiddenException('Chỉ có người tạo mới có thể cập nhật ghi chú này');
     }
 
     Object.assign(note, updateNoteDto);
@@ -155,7 +155,7 @@ export class NotesService {
 
     // Only creator can delete the note
     if (note.createdBy.id !== userId) {
-      throw new ForbiddenException('Only the creator can delete this note');
+      throw new ForbiddenException('Chỉ có người tạo mới có thể xóa ghi chú này');
     }
 
     await this.notesRepository.remove(note);
@@ -168,7 +168,7 @@ export class NotesService {
       where: { id: userId },
     });
     if (!creator) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tìm thấy');
     }
 
     const duplicatedNote = this.notesRepository.create({
@@ -190,7 +190,7 @@ export class NotesService {
 
     // Only creator can pin/unpin
     if (note.createdBy.id !== userId) {
-      throw new ForbiddenException('Only the creator can pin/unpin this note');
+      throw new ForbiddenException('Chỉ có người tạo mới có thể ghim/bỏ ghim ghi chú này');
     }
 
     note.isPinned = !note.isPinned;
@@ -206,7 +206,7 @@ export class NotesService {
 
     // Only creator can share the note
     if (note.createdBy.id !== userId) {
-      throw new ForbiddenException('Only the creator can share this note');
+      throw new ForbiddenException('Chỉ có người tạo mới có thể chia sẻ ghi chú này');
     }
 
     const users = await this.usersRepository.findBy({
@@ -214,7 +214,7 @@ export class NotesService {
     });
 
     if (users.length !== shareNoteDto.userIds.length) {
-      throw new BadRequestException('One or more users not found');
+      throw new BadRequestException('Một hoặc nhiều người dùng không tìm thấy');
     }
 
     // Merge with existing shared users
@@ -235,7 +235,7 @@ export class NotesService {
 
     // Only creator can unshare the note
     if (note.createdBy.id !== userId) {
-      throw new ForbiddenException('Only the creator can unshare this note');
+      throw new ForbiddenException('Chỉ có người tạo mới có thể bỏ chia sẻ ghi chú này');
     }
 
     note.sharedWith = note.sharedWith?.filter((u) => u.id !== sharedUserId);
@@ -255,7 +255,7 @@ export class NotesService {
 
     const tag = await this.tagsRepository.findOne({ where: { id: tagId } });
     if (!tag) {
-      throw new NotFoundException('Tag not found');
+      throw new NotFoundException('Không tìm thấy tag');
     }
 
     if (!note.tags) {
@@ -264,7 +264,7 @@ export class NotesService {
 
     // Check if tag already exists
     if (note.tags.includes(tagId)) {
-      throw new BadRequestException('Tag already added to this note');
+      throw new BadRequestException('Tag đã được thêm vào ghi chú này');
     }
 
     note.tags.push(tagId);

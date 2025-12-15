@@ -27,7 +27,7 @@ export class SettingsService {
   async createTheme(createDto: CreateThemeDto, userId: string) {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tÌm thấy');
     }
 
     const theme = this.themesRepository.create({
@@ -62,7 +62,7 @@ export class SettingsService {
     });
 
     if (!theme) {
-      throw new NotFoundException('Theme not found');
+      throw new NotFoundException('Chủ đề không tÌm thấy');
     }
 
     return theme;
@@ -72,7 +72,7 @@ export class SettingsService {
     const theme = await this.getThemeById(id);
 
     if (theme.createdBy.id !== userId) {
-      throw new BadRequestException('You can only update your own themes');
+      throw new BadRequestException('Bạn chỉ có thể cập nhật chủ đề của riêng mình');
     }
 
     Object.assign(theme, updateDto);
@@ -83,11 +83,11 @@ export class SettingsService {
     const theme = await this.getThemeById(id);
 
     if (theme.createdBy.id !== userId) {
-      throw new BadRequestException('You can only delete your own themes');
+      throw new BadRequestException('Bạn chỉ có thể xóa chủ đề của riêng mình');
     }
 
     await this.themesRepository.remove(theme);
-    return { message: 'Theme deleted successfully' };
+    return { message: 'Chủ đề đã bị xóa thành công' };
   }
 
   async getDefaultThemes() {
@@ -116,7 +116,7 @@ export class SettingsService {
   private async createDefaultSettings(userId: string) {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tÌm thấy');
     }
 
     const settings = this.userSettingsRepository.create({
@@ -148,7 +148,7 @@ export class SettingsService {
         where: { id: updateDto.themeId },
       });
       if (!theme) {
-        throw new NotFoundException('Theme not found');
+        throw new NotFoundException('Chủ đề không tìm thấy');
       }
       settings.theme = theme;
       delete updateDto.themeId;

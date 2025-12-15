@@ -79,7 +79,7 @@ export class RolesService {
     });
 
     if (!role) {
-      throw new NotFoundException(`Role with ID ${id} not found`);
+      throw new NotFoundException(`Vai trò với ID ${id} không tìm thấy`);
     }
 
     return this.expandPermissions(role);
@@ -94,7 +94,7 @@ export class RolesService {
     const existingRole = await this.findByName(createRoleDto.name);
     if (existingRole) {
       throw new ConflictException(
-        `Role with name ${createRoleDto.name} already exists`,
+        `Vai trò với tên ${createRoleDto.name} đã tồn tại`,
       );
     }
 
@@ -111,7 +111,7 @@ export class RolesService {
 
     // System roles can only have their permissions updated
     if (role.isSystem && (updateRoleDto.name || updateRoleDto.displayName)) {
-      throw new BadRequestException('System roles cannot be renamed');
+      throw new BadRequestException('Vai trò hệ thống không thể được đổi tên');
     }
 
     // Check name conflict if name is being changed
@@ -119,7 +119,7 @@ export class RolesService {
       const existingRole = await this.findByName(updateRoleDto.name);
       if (existingRole) {
         throw new ConflictException(
-          `Role with name ${updateRoleDto.name} already exists`,
+          `Vai trò với tên ${updateRoleDto.name} đã tồn tại`,
         );
       }
     }
@@ -133,13 +133,13 @@ export class RolesService {
 
     // Prevent deleting system roles
     if (role.isSystem) {
-      throw new BadRequestException('System roles cannot be deleted');
+      throw new BadRequestException('Vai trò hệ thống không thể bị xóa');
     }
 
     // Check if role has users
     if (role.users && role.users.length > 0) {
       throw new BadRequestException(
-        `Cannot delete role '${role.displayName}' because it is assigned to ${role.users.length} user(s)`,
+        `Không thể xóa vai trò có người dùng gán`
       );
     }
 

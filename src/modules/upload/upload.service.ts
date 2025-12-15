@@ -49,20 +49,20 @@ export class UploadService {
 
   async uploadAvatar(file: Express.Multer.File, userId: string) {
     if (!file) {
-      throw new BadRequestException('No file provided');
+      throw new BadRequestException('Không có tệp nào được cung cấp');
     }
 
     if (!this.allowedImageTypes.includes(file.mimetype)) {
-      throw new BadRequestException('Only image files are allowed for avatars');
+      throw new BadRequestException('Chỉ cho phép các tệp hình ảnh cho đại diện');
     }
 
     if (file.size > this.maxFileSize) {
-      throw new BadRequestException('File size exceeds 10MB limit');
+      throw new BadRequestException('Kích thước tệp vượt quá hạn chế 10MB');
     }
 
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new BadRequestException('Không tìm thấy người dùng');
     }
 
     // Delete old avatar if exists
@@ -100,15 +100,15 @@ export class UploadService {
     entityId?: string,
   ) {
     if (!file) {
-      throw new BadRequestException('No file provided');
+      throw new BadRequestException('Không có tệp nào được cung cấp');
     }
 
     if (!this.allowedFileTypes.includes(file.mimetype)) {
-      throw new BadRequestException('File type not allowed');
+      throw new BadRequestException('Loại tệp không được cho phép');
     }
 
     if (file.size > this.maxFileSize) {
-      throw new BadRequestException('File size exceeds 10MB limit');
+      throw new BadRequestException('Kích thước tệp vượt quá hạn chế 10MB');
     }
 
     const filename = this.generateUniqueFilename(file.originalname);
@@ -176,11 +176,11 @@ export class UploadService {
     });
 
     if (!attachment) {
-      throw new BadRequestException('File not found');
+      throw new BadRequestException('Tệp không tìm thấy');
     }
 
     if (attachment.uploadedBy.id !== userId) {
-      throw new BadRequestException('Unauthorized to delete this file');
+      throw new BadRequestException('Không có quyền xóa tệp này');
     }
 
     const filepath = path.join(
@@ -212,7 +212,7 @@ export class UploadService {
     });
 
     if (!attachment) {
-      throw new BadRequestException('File not found');
+      throw new BadRequestException('Tệp không tÌm thấy');
     }
 
     return attachment;

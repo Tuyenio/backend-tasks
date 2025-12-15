@@ -37,7 +37,7 @@ export class CreateRoleDto {
 
   @IsString()
   @IsOptional()
-  @Matches(/^#[0-9A-Fa-f]{6}$/, { message: 'Color must be a valid hex color' })
+  @Matches(/^#[0-9A-Fa-f]{6}$/, { message: 'Màu phải là màu hex hợp lệ' })
   color?: string;
 }
 

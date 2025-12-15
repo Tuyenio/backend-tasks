@@ -94,7 +94,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new NotFoundException(`Người dùng với ID ${id} không tìm thấy`);
     }
 
     return user;
@@ -111,7 +111,7 @@ export class UsersService {
     // Check if email already exists
     const existingUser = await this.findByEmail(createUserDto.email);
     if (existingUser) {
-      throw new ConflictException('Email already exists');
+      throw new ConflictException('Email đã được sử dụng');
     }
 
     // Hash password
@@ -134,7 +134,7 @@ export class UsersService {
         where: { id: In(createUserDto.roleIds) },
       });
       if (roles.length !== createUserDto.roleIds.length) {
-        throw new BadRequestException('Some roles not found');
+        throw new BadRequestException('Một số vai trò không tìm thấy');
       }
     } else {
       // Get default member role
@@ -142,7 +142,7 @@ export class UsersService {
         where: { name: 'member' },
       });
       if (!memberRole) {
-        throw new NotFoundException('Default member role not found');
+        throw new NotFoundException('Vai trò thành viên mặc định không tìm thấy');
       }
       roles = [memberRole];
     }
@@ -183,7 +183,7 @@ export class UsersService {
     if (updateUserDto.email && updateUserDto.email !== user.email) {
       const existingUser = await this.findByEmail(updateUserDto.email);
       if (existingUser) {
-        throw new ConflictException('Email already exists');
+        throw new ConflictException('Email đã được sử dụng');
       }
     }
 
@@ -193,7 +193,7 @@ export class UsersService {
         where: { id: In(updateUserDto.roleIds) },
       });
       if (roles.length !== updateUserDto.roleIds.length) {
-        throw new BadRequestException('Some roles not found');
+        throw new BadRequestException('Một số vai trò không tìm thấy');
       }
       user.roles = roles;
       delete updateUserDto.roleIds; // Don't assign this directly
@@ -222,7 +222,7 @@ export class UsersService {
     });
 
     if (roles.length !== roleIds.length) {
-      throw new BadRequestException('Some role IDs are invalid');
+      throw new BadRequestException('Một số ID vai trò không hợp lệ');
     }
 
     user.roles = roles;
@@ -235,7 +235,7 @@ export class UsersService {
     user.roles = user.roles.filter((role) => role.id !== roleId);
 
     if (user.roles.length === 0) {
-      throw new BadRequestException('User must have at least one role');
+      throw new BadRequestException('Người dùng phải có ít nhất một vai trò');
     }
 
     return this.usersRepository.save(user);
