@@ -67,7 +67,8 @@ export class NotificationsController {
     // Update unread counts for affected users
     const userIds = [...new Set(notifications.map((n) => n.user.id))];
     for (const userId of userIds) {
-      const unreadCount = await this.notificationsService.getUnreadCount(userId);
+      const unreadCount =
+        await this.notificationsService.getUnreadCount(userId);
       this.notificationsGateway.notifyUnreadCount(userId, unreadCount);
     }
 
@@ -122,10 +123,7 @@ export class NotificationsController {
   }
 
   @Patch('read-multiple')
-  async markMultipleAsRead(
-    @Body() body: { ids: string[] },
-    @Request() req,
-  ) {
+  async markMultipleAsRead(@Body() body: { ids: string[] }, @Request() req) {
     const notifications = await this.notificationsService.markMultipleAsRead(
       body.ids,
       req.user.id,

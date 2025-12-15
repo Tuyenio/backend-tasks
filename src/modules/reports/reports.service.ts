@@ -5,7 +5,11 @@ import { Task, TaskStatus, TaskPriority } from '../../entities/task.entity';
 import { Project, ProjectStatus } from '../../entities/project.entity';
 import { User } from '../../entities/user.entity';
 import { ActivityLog } from '../../entities/activity-log.entity';
-import { GenerateReportDto, ReportType, ExportFormat } from './dto/generate-report.dto';
+import {
+  GenerateReportDto,
+  ReportType,
+  ExportFormat,
+} from './dto/generate-report.dto';
 import { GetChartDataDto, ChartType } from './dto/get-chart-data.dto';
 import { Parser } from 'json2csv';
 import { ExportService } from './export.service';
@@ -32,7 +36,12 @@ export class ReportsService {
 
     switch (type) {
       case ReportType.TASKS:
-        data = await this.generateTasksReport(startDate, endDate, projectId, userId);
+        data = await this.generateTasksReport(
+          startDate,
+          endDate,
+          projectId,
+          userId,
+        );
         reportTitle = 'Tasks Report';
         break;
       case ReportType.PROJECTS:
@@ -220,9 +229,14 @@ export class ReportsService {
 
     // Calculate performance metrics
     const totalTasks = tasks.length;
-    const completedTasks = tasks.filter((t) => t.status === TaskStatus.DONE).length;
+    const completedTasks = tasks.filter(
+      (t) => t.status === TaskStatus.DONE,
+    ).length;
     const overdueTasks = tasks.filter(
-      (t) => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== TaskStatus.DONE,
+      (t) =>
+        t.dueDate &&
+        new Date(t.dueDate) < new Date() &&
+        t.status !== TaskStatus.DONE,
     ).length;
 
     const performanceByUser = tasks.reduce((acc, task) => {
@@ -243,7 +257,11 @@ export class ReportsService {
         } else if (task.status === TaskStatus.IN_PROGRESS) {
           acc[assignee.id].inProgressTasks++;
         }
-        if (task.dueDate && new Date(task.dueDate) < new Date() && task.status !== TaskStatus.DONE) {
+        if (
+          task.dueDate &&
+          new Date(task.dueDate) < new Date() &&
+          task.status !== TaskStatus.DONE
+        ) {
           acc[assignee.id].overdueTasks++;
         }
       });
@@ -264,9 +282,9 @@ export class ReportsService {
             .replace(/([A-Z])/g, ' $1')
             .replace(/^./, (str) => str.toUpperCase())
             .trim();
-          
+
           let value = item[key];
-          
+
           // Format dates
           if (value instanceof Date) {
             value = value.toLocaleString('vi-VN');
@@ -279,7 +297,7 @@ export class ReportsService {
           else if (typeof value === 'object' && value !== null) {
             value = JSON.stringify(value);
           }
-          
+
           formatted[readableKey] = value;
         });
         return formatted;
@@ -294,7 +312,7 @@ export class ReportsService {
       const bom = '\uFEFF';
       const header = `${title}\n`;
       const timestamp = `Generated: ${new Date().toLocaleString('vi-VN')}\n\n`;
-      
+
       const content = bom + header + timestamp + csv;
 
       return {
@@ -453,7 +471,10 @@ export class ReportsService {
     };
   }
 
-  private async getTaskCompletionTrendChart(startDate?: string, endDate?: string) {
+  private async getTaskCompletionTrendChart(
+    startDate?: string,
+    endDate?: string,
+  ) {
     const qb = this.tasksRepository
       .createQueryBuilder('task')
       .select('DATE(task.updatedAt)', 'date')
@@ -500,10 +521,13 @@ export class ReportsService {
           .where('assignee.id = :userId', { userId: user.id });
 
         if (startDate && endDate) {
-          assignedQuery = assignedQuery.andWhere('task.createdAt BETWEEN :startDate AND :endDate', {
-            startDate,
-            endDate,
-          });
+          assignedQuery = assignedQuery.andWhere(
+            'task.createdAt BETWEEN :startDate AND :endDate',
+            {
+              startDate,
+              endDate,
+            },
+          );
         }
 
         const assignedTasks = await assignedQuery.getCount();
@@ -516,15 +540,19 @@ export class ReportsService {
           .andWhere('task.status = :status', { status: TaskStatus.DONE });
 
         if (startDate && endDate) {
-          completedQuery = completedQuery.andWhere('task.createdAt BETWEEN :startDate AND :endDate', {
-            startDate,
-            endDate,
-          });
+          completedQuery = completedQuery.andWhere(
+            'task.createdAt BETWEEN :startDate AND :endDate',
+            {
+              startDate,
+              endDate,
+            },
+          );
         }
 
         const completedTasks = await completedQuery.getCount();
 
-        const completionRate = assignedTasks > 0 ? (completedTasks / assignedTasks) * 100 : 0;
+        const completionRate =
+          assignedTasks > 0 ? (completedTasks / assignedTasks) * 100 : 0;
 
         return {
           id: user.id,
@@ -551,10 +579,13 @@ export class ReportsService {
           .where('task.projectId = :projectId', { projectId: project.id });
 
         if (startDate && endDate) {
-          totalQuery = totalQuery.andWhere('task.createdAt BETWEEN :startDate AND :endDate', {
-            startDate,
-            endDate,
-          });
+          totalQuery = totalQuery.andWhere(
+            'task.createdAt BETWEEN :startDate AND :endDate',
+            {
+              startDate,
+              endDate,
+            },
+          );
         }
 
         const totalTasks = await totalQuery.getCount();
@@ -565,10 +596,13 @@ export class ReportsService {
           .andWhere('task.status = :status', { status: TaskStatus.DONE });
 
         if (startDate && endDate) {
-          completedQuery = completedQuery.andWhere('task.createdAt BETWEEN :startDate AND :endDate', {
-            startDate,
-            endDate,
-          });
+          completedQuery = completedQuery.andWhere(
+            'task.createdAt BETWEEN :startDate AND :endDate',
+            {
+              startDate,
+              endDate,
+            },
+          );
         }
 
         const completedTasks = await completedQuery.getCount();
@@ -576,18 +610,24 @@ export class ReportsService {
         let inProgressQuery = this.tasksRepository
           .createQueryBuilder('task')
           .where('task.projectId = :projectId', { projectId: project.id })
-          .andWhere('task.status = :status', { status: TaskStatus.IN_PROGRESS });
+          .andWhere('task.status = :status', {
+            status: TaskStatus.IN_PROGRESS,
+          });
 
         if (startDate && endDate) {
-          inProgressQuery = inProgressQuery.andWhere('task.createdAt BETWEEN :startDate AND :endDate', {
-            startDate,
-            endDate,
-          });
+          inProgressQuery = inProgressQuery.andWhere(
+            'task.createdAt BETWEEN :startDate AND :endDate',
+            {
+              startDate,
+              endDate,
+            },
+          );
         }
 
         const inProgressTasks = await inProgressQuery.getCount();
 
-        const completionRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+        const completionRate =
+          totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
         return {
           id: project.id,
@@ -619,12 +659,17 @@ export class ReportsService {
       this.tasksRepository.count({ where: { status: TaskStatus.DONE } }),
       this.tasksRepository.count({ where: { status: TaskStatus.IN_PROGRESS } }),
       this.projectsRepository.count(),
-      this.projectsRepository.count({ where: { status: ProjectStatus.ACTIVE } }),
+      this.projectsRepository.count({
+        where: { status: ProjectStatus.ACTIVE },
+      }),
       this.usersRepository.count(),
       this.usersRepository.count({ where: { isActive: true } }),
     ]);
 
-    const completionRate = totalTasks > 0 ? parseFloat(((completedTasks / totalTasks) * 100).toFixed(2)) : 0;
+    const completionRate =
+      totalTasks > 0
+        ? parseFloat(((completedTasks / totalTasks) * 100).toFixed(2))
+        : 0;
 
     return {
       totalTasks,

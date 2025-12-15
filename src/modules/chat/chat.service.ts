@@ -38,7 +38,10 @@ export class ChatService {
     const allParticipantIds = [...createChatDto.participantIds, userId];
     const uniqueParticipantIds = [...new Set(allParticipantIds)];
 
-    if (createChatDto.type === ChatType.DIRECT && uniqueParticipantIds.length !== 2) {
+    if (
+      createChatDto.type === ChatType.DIRECT &&
+      uniqueParticipantIds.length !== 2
+    ) {
       throw new BadRequestException(
         'Direct chat must have exactly 2 participants',
       );
@@ -197,9 +200,7 @@ export class ChatService {
 
     // Only the participant themselves can leave
     if (participantId !== userId) {
-      throw new ForbiddenException(
-        'You can only remove yourself from chat',
-      );
+      throw new ForbiddenException('You can only remove yourself from chat');
     }
 
     chat.members = chat.members.filter((p) => p.id !== participantId);
@@ -224,11 +225,11 @@ export class ChatService {
       content: createMessageDto.content,
       type: createMessageDto.type,
     });
-    
+
     if (createMessageDto.attachmentUrl) {
       message.attachmentUrls = [createMessageDto.attachmentUrl];
     }
-    
+
     message.chat = chat;
     message.sender = sender;
 
@@ -339,7 +340,9 @@ export class ChatService {
     }
 
     // Fetch all other users
-    const others = await this.usersRepository.find({ where: { id: Not(userId) } });
+    const others = await this.usersRepository.find({
+      where: { id: Not(userId) },
+    });
     if (!others.length) return;
 
     for (const other of others) {

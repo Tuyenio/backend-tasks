@@ -47,7 +47,12 @@ export class UploadController {
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
-    return this.uploadService.uploadFile(file, req.user.id, entityType, entityId);
+    return this.uploadService.uploadFile(
+      file,
+      req.user.id,
+      entityType,
+      entityId,
+    );
   }
 
   @Post('files')

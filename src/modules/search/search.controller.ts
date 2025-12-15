@@ -35,12 +35,18 @@ export class SearchController {
   }
 
   @Get('recent')
-  async getRecentSearches(@Query('limit') limit: string = '10', @Request() req) {
+  async getRecentSearches(
+    @Query('limit') limit: string = '10',
+    @Request() req,
+  ) {
     return this.searchService.getRecentSearches(req.user.id, parseInt(limit));
   }
 
   @Post('history')
-  async saveSearchHistory(@Body() body: { query: string; type: string }, @Request() req) {
+  async saveSearchHistory(
+    @Body() body: { query: string; type: string },
+    @Request() req,
+  ) {
     return this.searchService.saveSearchHistory(
       req.user.id,
       body.query,

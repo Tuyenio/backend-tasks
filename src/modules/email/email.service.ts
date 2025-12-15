@@ -72,7 +72,11 @@ export class EmailService {
     });
   }
 
-  async sendPasswordResetEmail(email: string, resetToken: string, name: string) {
+  async sendPasswordResetEmail(
+    email: string,
+    resetToken: string,
+    name: string,
+  ) {
     const template = this.getPasswordResetTemplate(resetToken, name);
     return this.sendEmail({
       to: email,
@@ -82,7 +86,11 @@ export class EmailService {
     });
   }
 
-  async sendEmailVerificationEmail(email: string, verificationToken: string, name: string) {
+  async sendEmailVerificationEmail(
+    email: string,
+    verificationToken: string,
+    name: string,
+  ) {
     const template = this.getEmailVerificationTemplate(verificationToken, name);
     return this.sendEmail({
       to: email,
@@ -92,8 +100,17 @@ export class EmailService {
     });
   }
 
-  async sendTaskAssignedEmail(email: string, taskTitle: string, projectName: string, assignerName: string) {
-    const template = this.getTaskAssignedTemplate(taskTitle, projectName, assignerName);
+  async sendTaskAssignedEmail(
+    email: string,
+    taskTitle: string,
+    projectName: string,
+    assignerName: string,
+  ) {
+    const template = this.getTaskAssignedTemplate(
+      taskTitle,
+      projectName,
+      assignerName,
+    );
     return this.sendEmail({
       to: email,
       subject: template.subject,
@@ -102,7 +119,11 @@ export class EmailService {
     });
   }
 
-  async sendTaskDueReminderEmail(email: string, taskTitle: string, dueDate: Date) {
+  async sendTaskDueReminderEmail(
+    email: string,
+    taskTitle: string,
+    dueDate: Date,
+  ) {
     const template = this.getTaskDueReminderTemplate(taskTitle, dueDate);
     return this.sendEmail({
       to: email,
@@ -112,7 +133,11 @@ export class EmailService {
     });
   }
 
-  async sendProjectInviteEmail(email: string, projectName: string, inviterName: string) {
+  async sendProjectInviteEmail(
+    email: string,
+    projectName: string,
+    inviterName: string,
+  ) {
     const template = this.getProjectInviteTemplate(projectName, inviterName);
     return this.sendEmail({
       to: email,
@@ -122,8 +147,17 @@ export class EmailService {
     });
   }
 
-  async sendUserInviteEmail(email: string, inviteToken: string, inviterName: string, roleName: string) {
-    const template = this.getUserInviteTemplate(inviteToken, inviterName, roleName);
+  async sendUserInviteEmail(
+    email: string,
+    inviteToken: string,
+    inviterName: string,
+    roleName: string,
+  ) {
+    const template = this.getUserInviteTemplate(
+      inviteToken,
+      inviterName,
+      roleName,
+    );
     return this.sendEmail({
       to: email,
       subject: template.subject,
@@ -165,7 +199,10 @@ export class EmailService {
     };
   }
 
-  private getPasswordResetTemplate(resetToken: string, name: string): EmailTemplate {
+  private getPasswordResetTemplate(
+    resetToken: string,
+    name: string,
+  ): EmailTemplate {
     const resetUrl = `${this.configService.get('APP_URL', 'http://localhost:3000')}/reset-password?token=${resetToken}`;
     return {
       subject: 'Reset Your Password',
@@ -189,7 +226,10 @@ export class EmailService {
     };
   }
 
-  private getEmailVerificationTemplate(verificationToken: string, name: string): EmailTemplate {
+  private getEmailVerificationTemplate(
+    verificationToken: string,
+    name: string,
+  ): EmailTemplate {
     const verifyUrl = `${this.configService.get('APP_URL', 'http://localhost:3000')}/verify-email?token=${verificationToken}`;
     return {
       subject: 'Verify Your Email Address',
@@ -211,7 +251,11 @@ export class EmailService {
     };
   }
 
-  private getTaskAssignedTemplate(taskTitle: string, projectName: string, assignerName: string): EmailTemplate {
+  private getTaskAssignedTemplate(
+    taskTitle: string,
+    projectName: string,
+    assignerName: string,
+  ): EmailTemplate {
     return {
       subject: `New Task Assigned: ${taskTitle}`,
       html: `
@@ -235,7 +279,10 @@ export class EmailService {
     };
   }
 
-  private getTaskDueReminderTemplate(taskTitle: string, dueDate: Date): EmailTemplate {
+  private getTaskDueReminderTemplate(
+    taskTitle: string,
+    dueDate: Date,
+  ): EmailTemplate {
     return {
       subject: `Task Due Soon: ${taskTitle}`,
       html: `
@@ -259,7 +306,10 @@ export class EmailService {
     };
   }
 
-  private getProjectInviteTemplate(projectName: string, inviterName: string): EmailTemplate {
+  private getProjectInviteTemplate(
+    projectName: string,
+    inviterName: string,
+  ): EmailTemplate {
     return {
       subject: `Project Invitation: ${projectName}`,
       html: `
@@ -282,7 +332,11 @@ export class EmailService {
     };
   }
 
-  private getUserInviteTemplate(inviteToken: string, inviterName: string, roleName: string): EmailTemplate {
+  private getUserInviteTemplate(
+    inviteToken: string,
+    inviterName: string,
+    roleName: string,
+  ): EmailTemplate {
     const acceptUrl = `${this.configService.get('FRONTEND_URL', 'http://localhost:3000')}/accept-invite?token=${inviteToken}`;
     return {
       subject: `Lời mời tham gia TaskMaster từ ${inviterName}`,
@@ -315,7 +369,11 @@ export class EmailService {
     };
   }
 
-  private getAccountCreatedTemplate(email: string, name: string, password: string): EmailTemplate {
+  private getAccountCreatedTemplate(
+    email: string,
+    name: string,
+    password: string,
+  ): EmailTemplate {
     const loginUrl = `${this.configService.get('FRONTEND_URL', 'http://localhost:3000')}/login`;
     return {
       subject: `Tài khoản TaskMaster của bạn đã được tạo`,

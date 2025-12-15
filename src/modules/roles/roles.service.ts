@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Role } from '../../entities/role.entity';
@@ -68,15 +73,15 @@ export class RolesService {
   }
 
   async findOne(id: string): Promise<Role> {
-    const role = await this.rolesRepository.findOne({ 
+    const role = await this.rolesRepository.findOne({
       where: { id },
       relations: ['users'],
     });
-    
+
     if (!role) {
       throw new NotFoundException(`Role with ID ${id} not found`);
     }
-    
+
     return this.expandPermissions(role);
   }
 
@@ -88,14 +93,16 @@ export class RolesService {
     // Check if role name already exists
     const existingRole = await this.findByName(createRoleDto.name);
     if (existingRole) {
-      throw new ConflictException(`Role with name ${createRoleDto.name} already exists`);
+      throw new ConflictException(
+        `Role with name ${createRoleDto.name} already exists`,
+      );
     }
 
     const role = this.rolesRepository.create({
       ...createRoleDto,
       isSystem: false, // Custom roles are never system roles
     });
-    
+
     return this.rolesRepository.save(role);
   }
 
@@ -111,7 +118,9 @@ export class RolesService {
     if (updateRoleDto.name && updateRoleDto.name !== role.name) {
       const existingRole = await this.findByName(updateRoleDto.name);
       if (existingRole) {
-        throw new ConflictException(`Role with name ${updateRoleDto.name} already exists`);
+        throw new ConflictException(
+          `Role with name ${updateRoleDto.name} already exists`,
+        );
       }
     }
 

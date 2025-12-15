@@ -1,7 +1,7 @@
 /**
  * Advanced Export Service for Reports
  * Handles CSV, PDF, and Excel export with formatting
- * 
+ *
  * Features:
  * - CSV with proper formatting and BOM for Excel
  * - PDF with tables, charts, and colors
@@ -65,7 +65,9 @@ export class ExportService {
    * Generate HTML table that can be printed to PDF
    * Includes colors and professional formatting
    */
-  generateHtmlTable(options: ExportOptions & { colors?: Record<string, string> }): string {
+  generateHtmlTable(
+    options: ExportOptions & { colors?: Record<string, string> },
+  ): string {
     const { title, columns, data, colors = {} } = options;
 
     const htmlHeader = `
@@ -209,14 +211,17 @@ export class ExportService {
             ${columns
               .map((col) => {
                 const key = col.toLowerCase().replace(/\s+/g, '_');
-                let value = row[key] || row[col.toLowerCase()] || '';
-                
+                const value = row[key] || row[col.toLowerCase()] || '';
+
                 // Apply styling for status badges
-                if (col.toLowerCase().includes('status') || col.toLowerCase().includes('priority')) {
+                if (
+                  col.toLowerCase().includes('status') ||
+                  col.toLowerCase().includes('priority')
+                ) {
                   const statusClass = `status-${value.toLowerCase().replace(/\s+/g, '_')}`;
                   return `<td><span class="status-badge ${statusClass}">${value}</span></td>`;
                 }
-                
+
                 return `<td>${value}</td>`;
               })
               .join('')}
@@ -241,12 +246,7 @@ export class ExportService {
    * Generate statistics cards HTML for PDF header
    */
   generateStatsHtml(stats: Record<string, any>): string {
-    const colors = [
-      '#667eea',
-      '#764ba2',
-      '#f093fb',
-      '#4facfe',
-    ];
+    const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe'];
 
     let html = '<div class="stats">';
     let colorIndex = 0;

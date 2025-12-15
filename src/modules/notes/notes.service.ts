@@ -73,10 +73,9 @@ export class NotesService {
       });
 
     if (search) {
-      qb.andWhere(
-        '(note.title ILIKE :search OR note.content ILIKE :search)',
-        { search: `%${search}%` },
-      );
+      qb.andWhere('(note.title ILIKE :search OR note.content ILIKE :search)', {
+        search: `%${search}%`,
+      });
     }
 
     if (tagId) {
@@ -249,7 +248,9 @@ export class NotesService {
 
     // Only creator can add tags
     if (note.createdBy.id !== userId) {
-      throw new ForbiddenException('Only the creator can add tags to this note');
+      throw new ForbiddenException(
+        'Only the creator can add tags to this note',
+      );
     }
 
     const tag = await this.tagsRepository.findOne({ where: { id: tagId } });

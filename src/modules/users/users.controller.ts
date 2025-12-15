@@ -46,7 +46,17 @@ export class UsersController {
   }
 
   @Patch('me')
-  async updateMe(@Request() req, @Body() updateData: { name?: string; phone?: string; bio?: string; department?: string; jobRole?: string }) {
+  async updateMe(
+    @Request() req,
+    @Body()
+    updateData: {
+      name?: string;
+      phone?: string;
+      bio?: string;
+      department?: string;
+      jobRole?: string;
+    },
+  ) {
     const user = await this.usersService.updateProfile(req.user.id, updateData);
     const { password, ...result } = user;
     return result;
@@ -103,7 +113,10 @@ export class UsersController {
 
   @Post(':id/roles')
   @RequirePermissions('users.manage')
-  async assignRoles(@Param('id') id: string, @Body() assignRoleDto: AssignRoleDto) {
+  async assignRoles(
+    @Param('id') id: string,
+    @Body() assignRoleDto: AssignRoleDto,
+  ) {
     const user = await this.usersService.assignRoles(id, assignRoleDto.roleIds);
     const { password, ...result } = user;
     return result;

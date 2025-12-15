@@ -1,4 +1,12 @@
-import { IsString, IsBoolean, IsOptional, IsInt, Min, MinLength, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsBoolean,
+  IsOptional,
+  IsInt,
+  Min,
+  MinLength,
+  MaxLength,
+} from 'class-validator';
 
 export class CreateChecklistItemDto {
   @IsString()

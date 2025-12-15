@@ -1,4 +1,11 @@
-import { IsString, IsOptional, IsArray, MinLength, MaxLength, IsHexColor } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsArray,
+  MinLength,
+  MaxLength,
+  IsHexColor,
+} from 'class-validator';
 
 export class UpdateRoleDto {
   @IsOptional()

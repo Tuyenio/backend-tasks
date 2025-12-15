@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, In } from 'typeorm';
 import { User } from '../../entities/user.entity';
@@ -24,8 +29,11 @@ export class UsersService {
     private chatService: ChatService,
   ) {}
 
-  async findAll(query: QueryUserDto): Promise<{ data: User[]; total: number; page: number; limit: number }> {
-    const { search, status, isActive, department, roleId, sortBy, sortOrder } = query;
+  async findAll(
+    query: QueryUserDto,
+  ): Promise<{ data: User[]; total: number; page: number; limit: number }> {
+    const { search, status, isActive, department, roleId, sortBy, sortOrder } =
+      query;
     const page = query.page || 1;
     const limit = query.limit || 10;
 
@@ -37,7 +45,7 @@ export class UsersService {
     if (search) {
       queryBuilder.where(
         '(user.name LIKE :search OR user.email LIKE :search)',
-        { search: `%${search}%` }
+        { search: `%${search}%` },
       );
     }
 
@@ -80,20 +88,20 @@ export class UsersService {
   }
 
   async findOne(id: string): Promise<User> {
-    const user = await this.usersRepository.findOne({ 
+    const user = await this.usersRepository.findOne({
       where: { id },
       relations: ['roles'],
     });
-    
+
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    
+
     return user;
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.usersRepository.findOne({ 
+    return this.usersRepository.findOne({
       where: { email },
       relations: ['roles'],
     });
@@ -115,7 +123,8 @@ export class UsersService {
     if (createUserDto.name) {
       finalName = createUserDto.name;
     } else if (createUserDto.firstName || createUserDto.lastName) {
-      finalName = `${createUserDto.firstName || ''} ${createUserDto.lastName || ''}`.trim();
+      finalName =
+        `${createUserDto.firstName || ''} ${createUserDto.lastName || ''}`.trim();
     }
 
     // Get roles - either from roleIds or default to member
@@ -129,8 +138,8 @@ export class UsersService {
       }
     } else {
       // Get default member role
-      const memberRole = await this.rolesRepository.findOne({ 
-        where: { name: 'member' } 
+      const memberRole = await this.rolesRepository.findOne({
+        where: { name: 'member' },
       });
       if (!memberRole) {
         throw new NotFoundException('Default member role not found');
@@ -196,11 +205,11 @@ export class UsersService {
 
   async remove(id: string): Promise<void> {
     const user = await this.findOne(id);
-    
+
     // Clear roles relationship first
     user.roles = [];
     await this.usersRepository.save(user);
-    
+
     // Then delete the user
     await this.usersRepository.delete(id);
   }
@@ -223,8 +232,8 @@ export class UsersService {
   async removeRole(userId: string, roleId: string): Promise<User> {
     const user = await this.findOne(userId);
 
-    user.roles = user.roles.filter(role => role.id !== roleId);
-    
+    user.roles = user.roles.filter((role) => role.id !== roleId);
+
     if (user.roles.length === 0) {
       throw new BadRequestException('User must have at least one role');
     }
@@ -252,9 +261,13 @@ export class UsersService {
     byDepartment: Record<string, number>;
   }> {
     const total = await this.usersRepository.count();
-    const active = await this.usersRepository.count({ where: { isActive: true } });
+    const active = await this.usersRepository.count({
+      where: { isActive: true },
+    });
     const inactive = total - active;
-    const online = await this.usersRepository.count({ where: { status: 'online' as any } });
+    const online = await this.usersRepository.count({
+      where: { status: 'online' as any },
+    });
 
     // Count by department
     const departments = await this.usersRepository
@@ -266,7 +279,7 @@ export class UsersService {
       .getRawMany();
 
     const byDepartment: Record<string, number> = {};
-    departments.forEach(dept => {
+    departments.forEach((dept) => {
       byDepartment[dept.department] = parseInt(dept.count);
     });
 
@@ -286,7 +299,7 @@ export class UsersService {
   }
 
   async getUserSettings(userId: string): Promise<UserSettings> {
-    let settings = await this.userSettingsRepository.findOne({ 
+    let settings = await this.userSettingsRepository.findOne({
       where: { user: { id: userId } },
       relations: ['user', 'theme'],
     });
@@ -310,13 +323,25 @@ export class UsersService {
     return settings;
   }
 
-  async updateUserSettings(userId: string, settingsData: Partial<UserSettings>): Promise<UserSettings> {
+  async updateUserSettings(
+    userId: string,
+    settingsData: Partial<UserSettings>,
+  ): Promise<UserSettings> {
     const settings = await this.getUserSettings(userId);
     Object.assign(settings, settingsData);
     return this.userSettingsRepository.save(settings);
   }
 
-  async updateProfile(userId: string, updateData: { name?: string; phone?: string; bio?: string; department?: string; jobRole?: string }): Promise<User> {
+  async updateProfile(
+    userId: string,
+    updateData: {
+      name?: string;
+      phone?: string;
+      bio?: string;
+      department?: string;
+      jobRole?: string;
+    },
+  ): Promise<User> {
     const user = await this.findOne(userId);
     Object.assign(user, updateData);
     return this.usersRepository.save(user);

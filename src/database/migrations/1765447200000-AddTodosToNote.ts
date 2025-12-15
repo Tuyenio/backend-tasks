@@ -9,7 +9,7 @@ export class AddTodosToNote1765447200000 implements MigrationInterface {
         type: 'text',
         isNullable: true,
         comment: 'JSON stringified array of todo items',
-      })
+      }),
     );
   }
 

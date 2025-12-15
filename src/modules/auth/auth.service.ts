@@ -12,7 +12,10 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User, UserStatus } from '../../entities/user.entity';
 import { Role } from '../../entities/role.entity';
-import { UserInvitation, InvitationStatus } from '../../entities/user-invitation.entity';
+import {
+  UserInvitation,
+  InvitationStatus,
+} from '../../entities/user-invitation.entity';
 import {
   RegisterDto,
   LoginDto,
@@ -51,21 +54,45 @@ export class AuthService {
       // Super admin has all permissions
       if (role.name === 'super_admin') {
         return [
-          'projects.create', 'projects.update', 'projects.delete', 'projects.view',
-          'tasks.create', 'tasks.update', 'tasks.delete', 'tasks.view', 'tasks.assign', 'tasks.complete',
-          'notes.create', 'notes.update', 'notes.delete', 'notes.view',
-          'chat.create', 'chat.send', 'chat.delete',
-          'reports.view', 'reports.export', 'reports.create',
-          'users.view', 'users.manage', 'users.invite',
-          'roles.view', 'roles.manage', 'roles.create', 'roles.delete',
-          'settings.view', 'settings.manage',
-          'team.view', 'team.manage',
+          'projects.create',
+          'projects.update',
+          'projects.delete',
+          'projects.view',
+          'tasks.create',
+          'tasks.update',
+          'tasks.delete',
+          'tasks.view',
+          'tasks.assign',
+          'tasks.complete',
+          'notes.create',
+          'notes.update',
+          'notes.delete',
+          'notes.view',
+          'chat.create',
+          'chat.send',
+          'chat.delete',
+          'reports.view',
+          'reports.export',
+          'reports.create',
+          'users.view',
+          'users.manage',
+          'users.invite',
+          'roles.view',
+          'roles.manage',
+          'roles.create',
+          'roles.delete',
+          'settings.view',
+          'settings.manage',
+          'team.view',
+          'team.manage',
         ];
       }
 
       // Add permissions from role
       if (role.permissions && Array.isArray(role.permissions)) {
-        role.permissions.forEach(permission => permissionsSet.add(permission));
+        role.permissions.forEach((permission) =>
+          permissionsSet.add(permission),
+        );
       }
     }
 
@@ -76,10 +103,16 @@ export class AuthService {
    * Format user object for frontend
    */
   private formatUserResponse(user: User) {
-    const { password, verificationToken, resetPasswordToken, resetPasswordExpires, ...userWithoutSensitiveData } = user;
+    const {
+      password,
+      verificationToken,
+      resetPasswordToken,
+      resetPasswordExpires,
+      ...userWithoutSensitiveData
+    } = user;
 
     // Extract role names
-    const roleNames = user.roles?.map(role => role.name) || [];
+    const roleNames = user.roles?.map((role) => role.name) || [];
 
     // Aggregate permissions
     const permissions = this.aggregatePermissions(user.roles || []);
@@ -131,9 +164,16 @@ export class AuthService {
     });
 
     await this.usersRepository.save(user);
-    
-      // Auto-create 1:1 chats with all existing users
-      await this.chatService.ensureDirectChatsForUser(user.id);
+
+    // Queue chat creation asynchronously (don't await, avoid N² performance issue)
+    this.chatService
+      .ensureDirectChatsForUser(user.id)
+      .catch((error) =>
+        console.error(
+          `Failed to create direct chats for user ${user.id}:`,
+          error,
+        ),
+      );
 
     // Send verification email
     try {
@@ -148,7 +188,8 @@ export class AuthService {
     }
 
     return {
-      message: 'Registration successful. Please check your email to verify your account.',
+      message:
+        'Registration successful. Please check your email to verify your account.',
       user: this.formatUserResponse(user),
     };
   }
@@ -180,7 +221,9 @@ export class AuthService {
 
     // Check if user is locked
     if (user.isLocked) {
-      throw new UnauthorizedException('Account has been locked. Please contact administrator.');
+      throw new UnauthorizedException(
+        'Account has been locked. Please contact administrator.',
+      );
     }
 
     // Update last login and status
@@ -246,7 +289,7 @@ export class AuthService {
       });
 
       user = await this.usersRepository.save(user);
-      
+
       // Reload with relations
       user = await this.usersRepository.findOne({
         where: { id: user.id },
@@ -256,9 +299,17 @@ export class AuthService {
       if (!user) {
         throw new NotFoundException('User not found after creation');
       }
-      
-        // Auto-create 1:1 chats with all existing users
-        await this.chatService.ensureDirectChatsForUser(user.id);
+
+      // Queue chat creation asynchronously (don't await, avoid N² performance issue)
+      const userId = user.id;
+      this.chatService
+        .ensureDirectChatsForUser(userId)
+        .catch((error) =>
+          console.error(
+            `Failed to create direct chats for user ${userId}:`,
+            error,
+          ),
+        );
     }
 
     // Generate JWT token
@@ -447,28 +498,38 @@ export class AuthService {
     if (existingInvite && existingInvite.expiresAt > new Date()) {
       // Resend invitation email with existing token
       try {
-        const inviterForResend = await this.usersRepository.findOne({ where: { id: inviterId } });
+        const inviterForResend = await this.usersRepository.findOne({
+          where: { id: inviterId },
+        });
         if (!inviterForResend) {
           throw new NotFoundException('Inviter not found');
         }
-        
+
         // Get role names for existing invite
-        const existingRoles = await this.rolesRepository.findByIds(existingInvite.roleIds);
-        const roleNames = existingRoles.map(r => r.displayName || r.name).join(', ');
-        
+        const existingRoles = await this.rolesRepository.findByIds(
+          existingInvite.roleIds,
+        );
+        const roleNames = existingRoles
+          .map((r) => r.displayName || r.name)
+          .join(', ');
+
         await this.emailService.sendUserInviteEmail(
           email,
           existingInvite.token,
           inviterForResend.name,
           roleNames,
         );
-        
+
         return {
           message: 'Invitation resent successfully',
           invitation: {
             email,
             expiresAt: existingInvite.expiresAt,
-            roles: existingRoles.map(r => ({ id: r.id, name: r.name, displayName: r.displayName })),
+            roles: existingRoles.map((r) => ({
+              id: r.id,
+              name: r.name,
+              displayName: r.displayName,
+            })),
           },
         };
       } catch (error) {
@@ -510,7 +571,7 @@ export class AuthService {
 
     // Generate invite token (JWT with 7 days expiry)
     const inviteToken = this.jwtService.sign(
-      { email, roleIds: roles.map(r => r.id), type: 'invite' },
+      { email, roleIds: roles.map((r) => r.id), type: 'invite' },
       { expiresIn: '7d' },
     );
 
@@ -522,7 +583,7 @@ export class AuthService {
     const invitation = this.invitationsRepository.create({
       email,
       token: inviteToken,
-      roleIds: roles.map(r => r.id),
+      roleIds: roles.map((r) => r.id),
       invitedById: inviterId,
       expiresAt,
       status: InvitationStatus.PENDING,
@@ -532,7 +593,7 @@ export class AuthService {
 
     // Send invitation email
     try {
-      const roleNames = roles.map(r => r.displayName || r.name).join(', ');
+      const roleNames = roles.map((r) => r.displayName || r.name).join(', ');
       await this.emailService.sendUserInviteEmail(
         email,
         inviteToken,
@@ -549,7 +610,11 @@ export class AuthService {
       invitation: {
         email,
         expiresAt,
-        roles: roles.map(r => ({ id: r.id, name: r.name, displayName: r.displayName })),
+        roles: roles.map((r) => ({
+          id: r.id,
+          name: r.name,
+          displayName: r.displayName,
+        })),
       },
     };
   }
@@ -573,7 +638,9 @@ export class AuthService {
       }
 
       if (invitation.status !== InvitationStatus.PENDING) {
-        throw new BadRequestException('Invitation has already been used or cancelled');
+        throw new BadRequestException(
+          'Invitation has already been used or cancelled',
+        );
       }
 
       if (invitation.expiresAt < new Date()) {
@@ -597,7 +664,11 @@ export class AuthService {
       return {
         email: invitation.email,
         inviterName: invitation.invitedBy?.name || 'Administrator',
-        roles: roles.map(r => ({ id: r.id, name: r.name, displayName: r.displayName })),
+        roles: roles.map((r) => ({
+          id: r.id,
+          name: r.name,
+          displayName: r.displayName,
+        })),
       };
     } catch (error) {
       if (error.name === 'TokenExpiredError') {
@@ -640,8 +711,15 @@ export class AuthService {
 
     await this.usersRepository.save(user);
 
-    // Auto-create 1:1 chats with all existing users
-    await this.chatService.ensureDirectChatsForUser(user.id);
+    // Queue chat creation asynchronously (don't await, avoid N² performance issue)
+    this.chatService
+      .ensureDirectChatsForUser(user.id)
+      .catch((error) =>
+        console.error(
+          `Failed to create direct chats for user ${user.id}:`,
+          error,
+        ),
+      );
 
     // Mark invitation as accepted
     invitation.status = InvitationStatus.ACCEPTED;

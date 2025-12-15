@@ -162,7 +162,9 @@ export class AdminService {
       this.usersRepository.count(),
       this.usersRepository.count({ where: { isActive: true } }),
       this.projectsRepository.count(),
-      this.projectsRepository.count({ where: { status: ProjectStatus.ACTIVE } }),
+      this.projectsRepository.count({
+        where: { status: ProjectStatus.ACTIVE },
+      }),
       this.tasksRepository.count(),
       this.tasksRepository.count({ where: { status: TaskStatus.DONE } }),
       this.tasksRepository
@@ -293,22 +295,19 @@ export class AdminService {
 
   // Database Cleanup
   async performDatabaseCleanup() {
-    const [
-      deletedLogs,
-      deletedSessions,
-      deletedNotifications,
-    ] = await Promise.all([
-      this.clearOldActivityLogs(90),
-      this.usersRepository.query(
-        "DELETE FROM user_sessions WHERE \"lastActiveAt\" < NOW() - INTERVAL '30 days'",
-      ),
-      this.notificationsRepository
-        .createQueryBuilder()
-        .delete()
-        .where('read = true')
-        .andWhere('createdAt < NOW() - INTERVAL \'60 days\'')
-        .execute(),
-    ]);
+    const [deletedLogs, deletedSessions, deletedNotifications] =
+      await Promise.all([
+        this.clearOldActivityLogs(90),
+        this.usersRepository.query(
+          'DELETE FROM user_sessions WHERE "lastActiveAt" < NOW() - INTERVAL \'30 days\'',
+        ),
+        this.notificationsRepository
+          .createQueryBuilder()
+          .delete()
+          .where('read = true')
+          .andWhere("createdAt < NOW() - INTERVAL '60 days'")
+          .execute(),
+      ]);
 
     return {
       deletedActivityLogs: deletedLogs,
@@ -318,9 +317,15 @@ export class AdminService {
   }
 
   // User Management
-  async getAllUsers(query?: { status?: string; role?: string; search?: string; page?: number; limit?: number }) {
+  async getAllUsers(query?: {
+    status?: string;
+    role?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) {
     const { status, role, search, page = 1, limit = 20 } = query || {};
-    
+
     const qb = this.usersRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.roles', 'role');
@@ -350,7 +355,15 @@ export class AdminService {
     const [items, total] = await qb.getManyAndCount();
 
     // Remove sensitive data
-    const users = items.map(({ password, verificationToken, resetPasswordToken, resetPasswordExpires, ...user }) => user);
+    const users = items.map(
+      ({
+        password,
+        verificationToken,
+        resetPasswordToken,
+        resetPasswordExpires,
+        ...user
+      }) => user,
+    );
 
     return {
       items: users,
@@ -362,14 +375,19 @@ export class AdminService {
   }
 
   async lockUser(userId: string): Promise<User> {
-    const user = await this.usersRepository.findOne({ where: { id: userId }, relations: ['roles'] });
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['roles'],
+    });
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
     // Cannot lock super_admin
-    const isSuperAdmin = user.roles?.some(role => role.name === 'super_admin');
+    const isSuperAdmin = user.roles?.some(
+      (role) => role.name === 'super_admin',
+    );
     if (isSuperAdmin) {
       throw new BadRequestException('Cannot lock super admin account');
     }
@@ -390,7 +408,7 @@ export class AdminService {
   }
 
   async assignRolesToUser(userId: string, roleIds: string[]): Promise<User> {
-    const user = await this.usersRepository.findOne({ 
+    const user = await this.usersRepository.findOne({
       where: { id: userId },
       relations: ['roles'],
     });

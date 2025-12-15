@@ -9,9 +9,7 @@ import { User } from '../../entities/user.entity';
 import { Chat } from '../../entities/chat.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Task, Project, Note, User, Chat]),
-  ],
+  imports: [TypeOrmModule.forFeature([Task, Project, Note, User, Chat])],
   controllers: [SearchController],
   providers: [SearchService],
   exports: [SearchService],

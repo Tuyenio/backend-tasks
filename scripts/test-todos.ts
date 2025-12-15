@@ -34,11 +34,11 @@ async function testTodos() {
 
     // Test 1: Create note with todos
     console.log('Test 1: Create note with todos')
-    const todosData = JSON.stringify([
+    const todosData = [
       { id: 'todo-1', text: 'Learn NestJS', completed: false },
       { id: 'todo-2', text: 'Build API', completed: false },
       { id: 'todo-3', text: 'Write tests', completed: true },
-    ])
+    ]
 
     const testNote = noteRepository.create({
       title: 'Test Note with Todos',
@@ -49,7 +49,7 @@ async function testTodos() {
 
     const savedNote = await noteRepository.save(testNote)
     console.log(`✅ Note created with ID: ${savedNote.id}`)
-    console.log(`📝 Todos stored: ${savedNote.todos}\n`)
+    console.log(`📝 Todos stored: ${JSON.stringify(savedNote.todos)}\n`)
 
     // Test 2: Retrieve note and verify todos
     console.log('Test 2: Retrieve note and verify todos')
@@ -64,10 +64,9 @@ async function testTodos() {
 
     console.log(`✅ Note retrieved: ${retrievedNote.title}`)
     
-    if (retrievedNote.todos) {
-      const parsedTodos = JSON.parse(retrievedNote.todos)
+    if (retrievedNote.todos && Array.isArray(retrievedNote.todos)) {
       console.log(`✅ Todos parsed successfully:`)
-      parsedTodos.forEach((todo: any) => {
+      retrievedNote.todos.forEach((todo: any) => {
         console.log(`  - [${todo.completed ? 'x' : ' '}] ${todo.text}`)
       })
     }
@@ -75,17 +74,17 @@ async function testTodos() {
 
     // Test 3: Update note todos
     console.log('Test 3: Update note todos')
-    const updatedTodos = JSON.stringify([
+    const updatedTodos = [
       { id: 'todo-1', text: 'Learn NestJS', completed: true },
       { id: 'todo-2', text: 'Build API', completed: true },
       { id: 'todo-3', text: 'Write tests', completed: true },
       { id: 'todo-4', text: 'Deploy', completed: false },
-    ])
+    ]
 
     retrievedNote.todos = updatedTodos
     const updatedNote = await noteRepository.save(retrievedNote)
     console.log(`✅ Note updated with new todos`)
-    console.log(`📝 Updated todos: ${updatedNote.todos}\n`)
+    console.log(`📝 Updated todos: ${JSON.stringify(updatedNote.todos)}\n`)
 
     // Test 4: Verify update persisted
     console.log('Test 4: Verify update persisted')
@@ -98,7 +97,7 @@ async function testTodos() {
       process.exit(1)
     }
 
-    const finalTodos = JSON.parse(finalNote.todos || '[]')
+    const finalTodos = Array.isArray(finalNote.todos) ? finalNote.todos : []
     console.log(`✅ Final todos state:`)
     finalTodos.forEach((todo: any) => {
       console.log(`  - [${todo.completed ? 'x' : ' '}] ${todo.text}`)

@@ -57,7 +57,10 @@ export class RolesController {
 
   @Patch(':id/permissions')
   @RequirePermissions('roles.manage')
-  updatePermissions(@Param('id') id: string, @Body('permissions') permissions: string[]) {
+  updatePermissions(
+    @Param('id') id: string,
+    @Body('permissions') permissions: string[],
+  ) {
     return this.rolesService.updatePermissions(id, permissions);
   }
 

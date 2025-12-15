@@ -17,7 +17,10 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { QueryTaskDto } from './dto/query-task.dto';
 import { AssignTaskDto } from './dto/assign-task.dto';
-import { CreateChecklistItemDto, UpdateChecklistItemDto } from './dto/checklist-item.dto';
+import {
+  CreateChecklistItemDto,
+  UpdateChecklistItemDto,
+} from './dto/checklist-item.dto';
 import { CreateReminderDto } from './dto/create-reminder.dto';
 import { CreateCommentDto, UpdateCommentDto } from './dto/comment.dto';
 import { AddReactionDto } from './dto/add-reaction.dto';
@@ -50,10 +53,7 @@ export class TasksController {
 
   @Get(':id/activity-logs')
   @RequirePermissions('tasks.view')
-  getActivityLogs(
-    @Param('id') id: string,
-    @Query('limit') limit?: string,
-  ) {
+  getActivityLogs(@Param('id') id: string, @Query('limit') limit?: string) {
     return this.tasksService.getActivityLogs(id, limit ? parseInt(limit) : 50);
   }
 
@@ -89,7 +89,11 @@ export class TasksController {
     @Body() assignTaskDto: AssignTaskDto,
     @Request() req: any,
   ) {
-    return this.tasksService.assignUsers(id, assignTaskDto.userIds, req.user.id);
+    return this.tasksService.assignUsers(
+      id,
+      assignTaskDto.userIds,
+      req.user.id,
+    );
   }
 
   @Delete(':id/assignees/:assigneeId')

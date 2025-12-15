@@ -13,7 +13,12 @@ export class UploadService {
   private readonly avatarDir = path.join(this.uploadDir, 'avatars');
   private readonly attachmentDir = path.join(this.uploadDir, 'attachments');
   private readonly maxFileSize = 10 * 1024 * 1024; // 10MB
-  private readonly allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  private readonly allowedImageTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+  ];
   private readonly allowedFileTypes = [
     ...this.allowedImageTypes,
     'application/pdf',
@@ -62,7 +67,10 @@ export class UploadService {
 
     // Delete old avatar if exists
     if (user.avatarUrl) {
-      const oldFilePath = path.join(process.cwd(), user.avatarUrl.replace('/uploads/', 'uploads/'));
+      const oldFilePath = path.join(
+        process.cwd(),
+        user.avatarUrl.replace('/uploads/', 'uploads/'),
+      );
       if (fs.existsSync(oldFilePath)) {
         fs.unlinkSync(oldFilePath);
       }
@@ -70,7 +78,7 @@ export class UploadService {
 
     const filename = this.generateUniqueFilename(file.originalname);
     const filepath = path.join(this.avatarDir, filename);
-    
+
     fs.writeFileSync(filepath, file.buffer);
 
     const avatarUrl = `/uploads/avatars/${filename}`;
@@ -105,7 +113,7 @@ export class UploadService {
 
     const filename = this.generateUniqueFilename(file.originalname);
     const filepath = path.join(this.attachmentDir, filename);
-    
+
     fs.writeFileSync(filepath, file.buffer);
 
     const fileUrl = `/uploads/attachments/${filename}`;
@@ -143,7 +151,12 @@ export class UploadService {
 
     for (const file of files) {
       try {
-        const result = await this.uploadFile(file, userId, entityType, entityId);
+        const result = await this.uploadFile(
+          file,
+          userId,
+          entityType,
+          entityId,
+        );
         uploadedFiles.push(result);
       } catch (error) {
         console.error(`Failed to upload ${file.originalname}:`, error.message);
@@ -211,7 +224,7 @@ export class UploadService {
     const extension = path.extname(originalname);
     const basename = path.basename(originalname, extension);
     const sanitizedBasename = basename.replace(/[^a-zA-Z0-9]/g, '_');
-    
+
     return `${sanitizedBasename}_${timestamp}_${randomString}${extension}`;
   }
 
@@ -253,10 +266,18 @@ export class UploadService {
       qb.where('user.id = :userId', { userId });
     }
 
-    const stats = await qb.groupBy('COALESCE(attachment.type, :otherType)').getRawMany();
+    const stats = await qb
+      .groupBy('COALESCE(attachment.type, :otherType)')
+      .getRawMany();
 
-    const totalSize = stats.reduce((sum, stat) => sum + (parseInt(stat.totalSize || '0') || 0), 0);
-    const totalFiles = stats.reduce((sum, stat) => sum + (parseInt(stat.totalFiles || '0') || 0), 0);
+    const totalSize = stats.reduce(
+      (sum, stat) => sum + (parseInt(stat.totalSize || '0') || 0),
+      0,
+    );
+    const totalFiles = stats.reduce(
+      (sum, stat) => sum + (parseInt(stat.totalFiles || '0') || 0),
+      0,
+    );
 
     return {
       totalSize,

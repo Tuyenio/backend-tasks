@@ -9,9 +9,7 @@ import { User } from '../../entities/user.entity';
 import { ActivityLog } from '../../entities/activity-log.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Task, Project, User, ActivityLog]),
-  ],
+  imports: [TypeOrmModule.forFeature([Task, Project, User, ActivityLog])],
   controllers: [ReportsController],
   providers: [ReportsService, ExportService],
   exports: [ReportsService],

@@ -1,4 +1,13 @@
-import { IsString, IsEmail, IsOptional, IsBoolean, IsEnum, MinLength, MaxLength, IsArray } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  IsOptional,
+  IsBoolean,
+  IsEnum,
+  MinLength,
+  MaxLength,
+  IsArray,
+} from 'class-validator';
 import { UserStatus } from '../../../entities/user.entity';
 
 export class UpdateUserDto {

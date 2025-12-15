@@ -53,10 +53,7 @@ export class ProjectsController {
 
   @Get(':id/activity-logs')
   @RequirePermissions('projects.view')
-  getActivityLogs(
-    @Param('id') id: string,
-    @Query('limit') limit?: number,
-  ) {
+  getActivityLogs(@Param('id') id: string, @Query('limit') limit?: number) {
     return this.projectsService.getActivityLogs(id, limit);
   }
 
@@ -91,7 +88,11 @@ export class ProjectsController {
     @Body() manageMembersDto: ManageMembersDto,
     @Request() req: any,
   ) {
-    return this.projectsService.addMembers(id, manageMembersDto.userIds, req.user.id);
+    return this.projectsService.addMembers(
+      id,
+      manageMembersDto.userIds,
+      req.user.id,
+    );
   }
 
   @Delete(':id/members/:memberId')

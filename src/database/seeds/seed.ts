@@ -1,4 +1,3 @@
-import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Role } from '../../entities/role.entity';
 import { User } from '../../entities/user.entity';
@@ -8,15 +7,22 @@ import { Task, TaskStatus, TaskPriority } from '../../entities/task.entity';
 import { Note } from '../../entities/note.entity';
 import { Chat, ChatType } from '../../entities/chat.entity';
 import { Message, MessageType } from '../../entities/message.entity';
-import { Notification, NotificationType } from '../../entities/notification.entity';
+import dataSource from '../data-source';
+import {
+  Notification,
+  NotificationType,
+} from '../../entities/notification.entity';
 import { SystemSetting } from '../../entities/system-setting.entity';
 import { Comment } from '../../entities/comment.entity';
 import { ChecklistItem } from '../../entities/checklist-item.entity';
-import { ActivityLog, ActivityAction, ActivityEntityType } from '../../entities/activity-log.entity';
+import {
+  ActivityLog,
+  ActivityAction,
+  ActivityEntityType,
+} from '../../entities/activity-log.entity';
 import { UserSettings } from '../../entities/user-settings.entity';
 import { Theme } from '../../entities/theme.entity';
 import { Attachment } from '../../entities/attachment.entity';
-import dataSource from '../data-source';
 
 // All permissions matching FE types
 const ALL_PERMISSIONS = [
@@ -289,7 +295,9 @@ async function seed() {
         });
 
         await userRepository.save(user);
-        console.log(`✅ Created user: ${userData.email} (${userData.roleName})`);
+        console.log(
+          `✅ Created user: ${userData.email} (${userData.roleName})`,
+        );
       } else {
         console.log(`⏭️  User already exists: ${userData.email}`);
       }
@@ -461,7 +469,8 @@ async function seed() {
       },
       {
         name: 'CRM System Upgrade',
-        description: 'Nâng cấp hệ thống CRM với tính năng automation và AI insights',
+        description:
+          'Nâng cấp hệ thống CRM với tính năng automation và AI insights',
         color: '#ec4899',
         status: 'active' as const,
         progress: 60,
@@ -473,7 +482,8 @@ async function seed() {
       },
       {
         name: 'ERP System Implementation',
-        description: 'Triển khai hệ thống ERP cho quản lý toàn diện doanh nghiệp',
+        description:
+          'Triển khai hệ thống ERP cho quản lý toàn diện doanh nghiệp',
         color: '#8b5cf6',
         status: 'active' as const,
         progress: 30,
@@ -521,7 +531,8 @@ async function seed() {
       },
       {
         name: 'Financial Dashboard BI',
-        description: 'Dashboard tài chính với Business Intelligence và real-time analytics',
+        description:
+          'Dashboard tài chính với Business Intelligence và real-time analytics',
         color: '#3b82f6',
         status: 'active' as const,
         progress: 70,
@@ -533,7 +544,8 @@ async function seed() {
       },
       {
         name: 'Mobile Payment Gateway',
-        description: 'Cổng thanh toán di động tích hợp multiple payment methods',
+        description:
+          'Cổng thanh toán di động tích hợp multiple payment methods',
         color: '#f59e0b',
         status: 'completed' as const,
         progress: 100,
@@ -612,7 +624,8 @@ async function seed() {
       },
       {
         title: 'Setup CI/CD pipeline',
-        description: 'Configure GitHub Actions cho automated testing và deployment',
+        description:
+          'Configure GitHub Actions cho automated testing và deployment',
         status: TaskStatus.TODO,
         priority: TaskPriority.HIGH,
         dueDate: new Date('2024-12-30'),
@@ -660,7 +673,8 @@ async function seed() {
       },
       {
         title: 'Security audit',
-        description: 'Thực hiện comprehensive security audit và fix vulnerabilities',
+        description:
+          'Thực hiện comprehensive security audit và fix vulnerabilities',
         status: TaskStatus.REVIEW,
         priority: TaskPriority.URGENT,
         dueDate: new Date('2024-12-24'),
@@ -710,7 +724,8 @@ async function seed() {
       },
       {
         title: 'Email notification system',
-        description: 'Setup email notifications cho task updates và assignments',
+        description:
+          'Setup email notifications cho task updates và assignments',
         status: TaskStatus.TODO,
         priority: TaskPriority.MEDIUM,
         dueDate: new Date('2025-01-08'),
@@ -822,7 +837,8 @@ async function seed() {
       },
       {
         title: 'Create blog editor component',
-        description: 'Build rich text editor cho blog posts với markdown support',
+        description:
+          'Build rich text editor cho blog posts với markdown support',
         status: TaskStatus.TODO,
         priority: TaskPriority.HIGH,
         dueDate: new Date('2025-01-15'),
@@ -1420,32 +1436,128 @@ async function seed() {
 
     // ========== SEED COMMENTS ==========
     console.log('\n💬 Seeding Comments...');
-    
+
     const commentsData = [
-      { task: tasks[0], author: users[0], content: 'Mockup đã hoàn thành, chờ feedback từ team design' },
-      { task: tasks[0], author: users[1], content: 'Mockup trông rất đẹp, recommend approve' },
-      { task: tasks[0], author: users[3], content: 'Đã áp dụng feedback, chuẩn bị cho implementation' },
-      { task: tasks[1], author: users[3], content: 'Đang code navbar, progress khoảng 70%' },
-      { task: tasks[1], author: users[1], content: 'Nhớ test responsive trên iPad nữa nhé' },
-      { task: tasks[2], author: users[2], content: 'Cần thảo luận thêm về API architecture' },
-      { task: tasks[2], author: users[0], content: 'Đã schedule meeting lúc 2PM để discuss' },
-      { task: tasks[10], author: users[1], content: 'Firebase setup hoàn thành, ready for testing' },
-      { task: tasks[10], author: users[3], content: 'Đã test push notification, working perfectly' },
-      { task: tasks[3], author: users[1], content: 'Đã add composite indexes cho frequently queried columns' },
-      { task: tasks[3], author: users[0], content: 'Performance cải thiện 60%, great job!' },
-      { task: tasks[6], author: users[0], content: 'JWT implementation đã hoàn thiện, cần review security' },
-      { task: tasks[8], author: users[1], content: 'Đã fix 3 critical vulnerabilities, còn 2 medium' },
-      { task: tasks[24], author: users[2], content: 'Product catalog có search và filter rất mượt' },
-      { task: tasks[24], author: users[1], content: 'Cần optimize query cho pagination' },
-      { task: tasks[25], author: users[1], content: 'Shopping cart đã implement Redux state management' },
-      { task: tasks[40], author: users[0], content: 'Smart contracts đã pass initial testing' },
-      { task: tasks[40], author: users[3], content: 'Cần thêm event logging cho tracking' },
-      { task: tasks[47], author: users[2], content: 'Patient portal UI đã hoàn thành' },
-      { task: tasks[47], author: users[3], content: 'Đang integrate với EMR system' },
-      { task: tasks[50], author: users[2], content: 'Dashboard charts render rất nhanh với 1M records' },
-      { task: tasks[33], author: users[1], content: 'Conversation engine handle được 1000 concurrent users' },
-      { task: tasks[35], author: users[2], content: 'IoT devices respond trong <100ms, excellent!' },
-      { task: tasks[30], author: users[0], content: 'Real-time data streaming working smoothly' },
+      {
+        task: tasks[0],
+        author: users[0],
+        content: 'Mockup đã hoàn thành, chờ feedback từ team design',
+      },
+      {
+        task: tasks[0],
+        author: users[1],
+        content: 'Mockup trông rất đẹp, recommend approve',
+      },
+      {
+        task: tasks[0],
+        author: users[3],
+        content: 'Đã áp dụng feedback, chuẩn bị cho implementation',
+      },
+      {
+        task: tasks[1],
+        author: users[3],
+        content: 'Đang code navbar, progress khoảng 70%',
+      },
+      {
+        task: tasks[1],
+        author: users[1],
+        content: 'Nhớ test responsive trên iPad nữa nhé',
+      },
+      {
+        task: tasks[2],
+        author: users[2],
+        content: 'Cần thảo luận thêm về API architecture',
+      },
+      {
+        task: tasks[2],
+        author: users[0],
+        content: 'Đã schedule meeting lúc 2PM để discuss',
+      },
+      {
+        task: tasks[10],
+        author: users[1],
+        content: 'Firebase setup hoàn thành, ready for testing',
+      },
+      {
+        task: tasks[10],
+        author: users[3],
+        content: 'Đã test push notification, working perfectly',
+      },
+      {
+        task: tasks[3],
+        author: users[1],
+        content: 'Đã add composite indexes cho frequently queried columns',
+      },
+      {
+        task: tasks[3],
+        author: users[0],
+        content: 'Performance cải thiện 60%, great job!',
+      },
+      {
+        task: tasks[6],
+        author: users[0],
+        content: 'JWT implementation đã hoàn thiện, cần review security',
+      },
+      {
+        task: tasks[8],
+        author: users[1],
+        content: 'Đã fix 3 critical vulnerabilities, còn 2 medium',
+      },
+      {
+        task: tasks[24],
+        author: users[2],
+        content: 'Product catalog có search và filter rất mượt',
+      },
+      {
+        task: tasks[24],
+        author: users[1],
+        content: 'Cần optimize query cho pagination',
+      },
+      {
+        task: tasks[25],
+        author: users[1],
+        content: 'Shopping cart đã implement Redux state management',
+      },
+      {
+        task: tasks[40],
+        author: users[0],
+        content: 'Smart contracts đã pass initial testing',
+      },
+      {
+        task: tasks[40],
+        author: users[3],
+        content: 'Cần thêm event logging cho tracking',
+      },
+      {
+        task: tasks[47],
+        author: users[2],
+        content: 'Patient portal UI đã hoàn thành',
+      },
+      {
+        task: tasks[47],
+        author: users[3],
+        content: 'Đang integrate với EMR system',
+      },
+      {
+        task: tasks[50],
+        author: users[2],
+        content: 'Dashboard charts render rất nhanh với 1M records',
+      },
+      {
+        task: tasks[33],
+        author: users[1],
+        content: 'Conversation engine handle được 1000 concurrent users',
+      },
+      {
+        task: tasks[35],
+        author: users[2],
+        content: 'IoT devices respond trong <100ms, excellent!',
+      },
+      {
+        task: tasks[30],
+        author: users[0],
+        content: 'Real-time data streaming working smoothly',
+      },
     ];
 
     for (const commentData of commentsData) {
@@ -1460,89 +1572,89 @@ async function seed() {
 
     // ========== SEED CHECKLISTS ==========
     console.log('\n✅ Seeding Checklist Items...');
-    
+
     const checklistsData = [
-      { 
-        task: tasks[0], 
+      {
+        task: tasks[0],
         items: [
           { title: 'Design lo-fi wireframes', completed: true },
           { title: 'Create hi-fi mockup', completed: true },
           { title: 'Get stakeholder approval', completed: true },
           { title: 'Export assets', completed: false },
-        ]
+        ],
       },
-      { 
-        task: tasks[1], 
+      {
+        task: tasks[1],
         items: [
           { title: 'Mobile layout', completed: true },
           { title: 'Tablet layout', completed: true },
           { title: 'Desktop layout', completed: false },
           { title: 'Test responsiveness', completed: false },
-        ]
+        ],
       },
-      { 
-        task: tasks[2], 
+      {
+        task: tasks[2],
         items: [
           { title: 'Setup API client', completed: false },
           { title: 'Integrate auth endpoints', completed: false },
           { title: 'Integrate task endpoints', completed: false },
           { title: 'Error handling', completed: false },
-        ]
+        ],
       },
-      { 
-        task: tasks[10], 
+      {
+        task: tasks[10],
         items: [
           { title: 'Create Firebase project', completed: true },
           { title: 'Setup authentication', completed: true },
           { title: 'Configure notifications', completed: true },
-        ]
+        ],
       },
-      { 
-        task: tasks[4], 
+      {
+        task: tasks[4],
         items: [
           { title: 'Setup GitHub Actions', completed: false },
           { title: 'Configure test pipeline', completed: false },
           { title: 'Setup deployment pipeline', completed: false },
           { title: 'Add status badges', completed: false },
-        ]
+        ],
       },
-      { 
-        task: tasks[24], 
+      {
+        task: tasks[24],
         items: [
           { title: 'Product listing page', completed: true },
           { title: 'Search functionality', completed: true },
           { title: 'Filter by category', completed: false },
           { title: 'Sort options', completed: false },
           { title: 'Pagination', completed: false },
-        ]
+        ],
       },
-      { 
-        task: tasks[25], 
+      {
+        task: tasks[25],
         items: [
           { title: 'Add to cart', completed: false },
           { title: 'Update quantity', completed: false },
           { title: 'Remove items', completed: false },
           { title: 'Calculate totals', completed: false },
           { title: 'Checkout flow', completed: false },
-        ]
+        ],
       },
-      { 
-        task: tasks[33], 
+      {
+        task: tasks[33],
         items: [
           { title: 'Message parsing', completed: true },
           { title: 'Context management', completed: true },
           { title: 'Response generation', completed: false },
           { title: 'Conversation history', completed: false },
-        ]
+        ],
       },
-      { 
-        task: tasks[40], 
+      {
+        task: tasks[40],
         items: [
           { title: 'ERC-20 token contract', completed: true },
           { title: 'Liquidity pool contract', completed: false },
           { title: 'Staking contract', completed: false },
           { title: 'Governance contract', completed: false },
-        ]
+        ],
       },
       {
         task: tasks[47],
@@ -1551,7 +1663,7 @@ async function seed() {
           { title: 'Appointment booking', completed: true },
           { title: 'Medical history view', completed: false },
           { title: 'Prescription download', completed: false },
-        ]
+        ],
       },
     ];
 
@@ -1572,20 +1684,104 @@ async function seed() {
 
     // ========== SEED ATTACHMENTS ==========
     console.log('\n📎 Seeding Attachments...');
-    
+
     const attachmentsData = [
-      { task: tasks[0], name: 'mockup-homepage-v2.fig', url: '/uploads/attachments/mockup-homepage-v2.fig', size: 2456789, mimeType: 'application/octet-stream', uploadedBy: users[3] },
-      { task: tasks[0], name: 'design-specs.pdf', url: '/uploads/attachments/design-specs.pdf', size: 1234567, mimeType: 'application/pdf', uploadedBy: users[3] },
-      { task: tasks[1], name: 'navbar-components.tsx', url: '/uploads/attachments/navbar-components.tsx', size: 45678, mimeType: 'text/plain', uploadedBy: users[3] },
-      { task: tasks[2], name: 'api-documentation.md', url: '/uploads/attachments/api-documentation.md', size: 89012, mimeType: 'text/markdown', uploadedBy: users[2] },
-      { task: tasks[3], name: 'database-indexes.sql', url: '/uploads/attachments/database-indexes.sql', size: 12345, mimeType: 'text/plain', uploadedBy: users[1] },
-      { task: tasks[8], name: 'security-audit-report.pdf', url: '/uploads/attachments/security-audit-report.pdf', size: 3456789, mimeType: 'application/pdf', uploadedBy: users[1] },
-      { task: tasks[10], name: 'firebase-config.json', url: '/uploads/attachments/firebase-config.json', size: 5678, mimeType: 'application/json', uploadedBy: users[3] },
-      { task: tasks[24], name: 'product-catalog-schema.png', url: '/uploads/attachments/product-catalog-schema.png', size: 567890, mimeType: 'image/png', uploadedBy: users[1] },
-      { task: tasks[25], name: 'checkout-flow-diagram.pdf', url: '/uploads/attachments/checkout-flow-diagram.pdf', size: 890123, mimeType: 'application/pdf', uploadedBy: users[1] },
-      { task: tasks[33], name: 'chatbot-training-data.csv', url: '/uploads/attachments/chatbot-training-data.csv', size: 12345678, mimeType: 'text/csv', uploadedBy: users[1] },
-      { task: tasks[40], name: 'smart-contract-audit.pdf', url: '/uploads/attachments/smart-contract-audit.pdf', size: 2345678, mimeType: 'application/pdf', uploadedBy: users[3] },
-      { task: tasks[47], name: 'patient-portal-wireframes.fig', url: '/uploads/attachments/patient-portal-wireframes.fig', size: 3456789, mimeType: 'application/octet-stream', uploadedBy: users[3] },
+      {
+        task: tasks[0],
+        name: 'mockup-homepage-v2.fig',
+        url: '/uploads/attachments/mockup-homepage-v2.fig',
+        size: 2456789,
+        mimeType: 'application/octet-stream',
+        uploadedBy: users[3],
+      },
+      {
+        task: tasks[0],
+        name: 'design-specs.pdf',
+        url: '/uploads/attachments/design-specs.pdf',
+        size: 1234567,
+        mimeType: 'application/pdf',
+        uploadedBy: users[3],
+      },
+      {
+        task: tasks[1],
+        name: 'navbar-components.tsx',
+        url: '/uploads/attachments/navbar-components.tsx',
+        size: 45678,
+        mimeType: 'text/plain',
+        uploadedBy: users[3],
+      },
+      {
+        task: tasks[2],
+        name: 'api-documentation.md',
+        url: '/uploads/attachments/api-documentation.md',
+        size: 89012,
+        mimeType: 'text/markdown',
+        uploadedBy: users[2],
+      },
+      {
+        task: tasks[3],
+        name: 'database-indexes.sql',
+        url: '/uploads/attachments/database-indexes.sql',
+        size: 12345,
+        mimeType: 'text/plain',
+        uploadedBy: users[1],
+      },
+      {
+        task: tasks[8],
+        name: 'security-audit-report.pdf',
+        url: '/uploads/attachments/security-audit-report.pdf',
+        size: 3456789,
+        mimeType: 'application/pdf',
+        uploadedBy: users[1],
+      },
+      {
+        task: tasks[10],
+        name: 'firebase-config.json',
+        url: '/uploads/attachments/firebase-config.json',
+        size: 5678,
+        mimeType: 'application/json',
+        uploadedBy: users[3],
+      },
+      {
+        task: tasks[24],
+        name: 'product-catalog-schema.png',
+        url: '/uploads/attachments/product-catalog-schema.png',
+        size: 567890,
+        mimeType: 'image/png',
+        uploadedBy: users[1],
+      },
+      {
+        task: tasks[25],
+        name: 'checkout-flow-diagram.pdf',
+        url: '/uploads/attachments/checkout-flow-diagram.pdf',
+        size: 890123,
+        mimeType: 'application/pdf',
+        uploadedBy: users[1],
+      },
+      {
+        task: tasks[33],
+        name: 'chatbot-training-data.csv',
+        url: '/uploads/attachments/chatbot-training-data.csv',
+        size: 12345678,
+        mimeType: 'text/csv',
+        uploadedBy: users[1],
+      },
+      {
+        task: tasks[40],
+        name: 'smart-contract-audit.pdf',
+        url: '/uploads/attachments/smart-contract-audit.pdf',
+        size: 2345678,
+        mimeType: 'application/pdf',
+        uploadedBy: users[3],
+      },
+      {
+        task: tasks[47],
+        name: 'patient-portal-wireframes.fig',
+        url: '/uploads/attachments/patient-portal-wireframes.fig',
+        size: 3456789,
+        mimeType: 'application/octet-stream',
+        uploadedBy: users[3],
+      },
     ];
 
     for (const attachmentData of attachmentsData) {
@@ -1596,23 +1792,128 @@ async function seed() {
 
     // ========== SEED ACTIVITY LOGS ==========
     console.log('\n📊 Seeding Activity Logs...');
-    
+
     const activityLogsData = [
-      { user: users[0], action: ActivityAction.CREATE, entityType: ActivityEntityType.PROJECT, entityId: projects[0].id.toString(), description: 'Created project "Website Redesign"', metadata: { projectName: 'Website Redesign' } },
-      { user: users[0], action: ActivityAction.CREATE, entityType: ActivityEntityType.TASK, entityId: tasks[0].id.toString(), description: 'Created task "Thiết kế mockup trang chủ"', metadata: { taskTitle: 'Thiết kế mockup trang chủ' } },
-      { user: users[3], action: ActivityAction.UPDATE, entityType: ActivityEntityType.TASK, entityId: tasks[0].id.toString(), description: 'Updated task status to DONE', metadata: { oldStatus: 'IN_PROGRESS', newStatus: 'DONE' } },
-      { user: users[0], action: ActivityAction.ASSIGN, entityType: ActivityEntityType.TASK, entityId: tasks[1].id.toString(), description: 'Assigned task to Phạm Thị Member', metadata: { assignee: 'Phạm Thị Member' } },
-      { user: users[3], action: ActivityAction.COMPLETE, entityType: ActivityEntityType.TASK, entityId: tasks[11].id.toString(), description: 'Completed task "Design app icon và splash screen"', metadata: { taskTitle: 'Design app icon và splash screen' } },
-      { user: users[0], action: ActivityAction.COMMENT, entityType: ActivityEntityType.TASK, entityId: tasks[0].id.toString(), description: 'Commented on task "Thiết kế mockup trang chủ"', metadata: { comment: 'Mockup đã hoàn thành' } },
-      { user: users[1], action: ActivityAction.CREATE, entityType: ActivityEntityType.PROJECT, entityId: projects[1].id.toString(), description: 'Created project "Mobile App Development"', metadata: { projectName: 'Mobile App Development' } },
-      { user: users[2], action: ActivityAction.UPDATE, entityType: ActivityEntityType.PROJECT, entityId: projects[2].id.toString(), description: 'Completed project "Marketing Campaign Q4"', metadata: { status: 'completed' } },
-      { user: users[1], action: ActivityAction.DELETE, entityType: ActivityEntityType.TASK, entityId: tasks[5].id.toString(), description: 'Deleted a comment on task', metadata: { reason: 'duplicate' } },
-      { user: users[0], action: ActivityAction.CREATE, entityType: ActivityEntityType.PROJECT, entityId: projects[6].id.toString(), description: 'Created project "AI Chatbot Integration"', metadata: { projectName: 'AI Chatbot Integration' } },
-      { user: users[2], action: ActivityAction.ASSIGN, entityType: ActivityEntityType.TASK, entityId: tasks[24].id.toString(), description: 'Assigned task to multiple users', metadata: { assignees: ['Trần Thị Admin', 'Phạm Thị Member'] } },
-      { user: users[1], action: ActivityAction.UPDATE, entityType: ActivityEntityType.TASK, entityId: tasks[8].id.toString(), description: 'Changed priority to URGENT', metadata: { oldPriority: 'HIGH', newPriority: 'URGENT' } },
-      { user: users[0], action: ActivityAction.CREATE, entityType: ActivityEntityType.TASK, entityId: tasks[40].id.toString(), description: 'Created task "Smart contract development"', metadata: { taskTitle: 'Smart contract development' } },
-      { user: users[3], action: ActivityAction.COMMENT, entityType: ActivityEntityType.TASK, entityId: tasks[40].id.toString(), description: 'Added comment with code review', metadata: { commentType: 'code_review' } },
-      { user: users[2], action: ActivityAction.COMPLETE, entityType: ActivityEntityType.TASK, entityId: tasks[18].id.toString(), description: 'Completed marketing task', metadata: { completedDate: '2024-11-30' } },
+      {
+        user: users[0],
+        action: ActivityAction.CREATE,
+        entityType: ActivityEntityType.PROJECT,
+        entityId: projects[0].id.toString(),
+        description: 'Created project "Website Redesign"',
+        metadata: { projectName: 'Website Redesign' },
+      },
+      {
+        user: users[0],
+        action: ActivityAction.CREATE,
+        entityType: ActivityEntityType.TASK,
+        entityId: tasks[0].id.toString(),
+        description: 'Created task "Thiết kế mockup trang chủ"',
+        metadata: { taskTitle: 'Thiết kế mockup trang chủ' },
+      },
+      {
+        user: users[3],
+        action: ActivityAction.UPDATE,
+        entityType: ActivityEntityType.TASK,
+        entityId: tasks[0].id.toString(),
+        description: 'Updated task status to DONE',
+        metadata: { oldStatus: 'IN_PROGRESS', newStatus: 'DONE' },
+      },
+      {
+        user: users[0],
+        action: ActivityAction.ASSIGN,
+        entityType: ActivityEntityType.TASK,
+        entityId: tasks[1].id.toString(),
+        description: 'Assigned task to Phạm Thị Member',
+        metadata: { assignee: 'Phạm Thị Member' },
+      },
+      {
+        user: users[3],
+        action: ActivityAction.COMPLETE,
+        entityType: ActivityEntityType.TASK,
+        entityId: tasks[11].id.toString(),
+        description: 'Completed task "Design app icon và splash screen"',
+        metadata: { taskTitle: 'Design app icon và splash screen' },
+      },
+      {
+        user: users[0],
+        action: ActivityAction.COMMENT,
+        entityType: ActivityEntityType.TASK,
+        entityId: tasks[0].id.toString(),
+        description: 'Commented on task "Thiết kế mockup trang chủ"',
+        metadata: { comment: 'Mockup đã hoàn thành' },
+      },
+      {
+        user: users[1],
+        action: ActivityAction.CREATE,
+        entityType: ActivityEntityType.PROJECT,
+        entityId: projects[1].id.toString(),
+        description: 'Created project "Mobile App Development"',
+        metadata: { projectName: 'Mobile App Development' },
+      },
+      {
+        user: users[2],
+        action: ActivityAction.UPDATE,
+        entityType: ActivityEntityType.PROJECT,
+        entityId: projects[2].id.toString(),
+        description: 'Completed project "Marketing Campaign Q4"',
+        metadata: { status: 'completed' },
+      },
+      {
+        user: users[1],
+        action: ActivityAction.DELETE,
+        entityType: ActivityEntityType.TASK,
+        entityId: tasks[5].id.toString(),
+        description: 'Deleted a comment on task',
+        metadata: { reason: 'duplicate' },
+      },
+      {
+        user: users[0],
+        action: ActivityAction.CREATE,
+        entityType: ActivityEntityType.PROJECT,
+        entityId: projects[6].id.toString(),
+        description: 'Created project "AI Chatbot Integration"',
+        metadata: { projectName: 'AI Chatbot Integration' },
+      },
+      {
+        user: users[2],
+        action: ActivityAction.ASSIGN,
+        entityType: ActivityEntityType.TASK,
+        entityId: tasks[24].id.toString(),
+        description: 'Assigned task to multiple users',
+        metadata: { assignees: ['Trần Thị Admin', 'Phạm Thị Member'] },
+      },
+      {
+        user: users[1],
+        action: ActivityAction.UPDATE,
+        entityType: ActivityEntityType.TASK,
+        entityId: tasks[8].id.toString(),
+        description: 'Changed priority to URGENT',
+        metadata: { oldPriority: 'HIGH', newPriority: 'URGENT' },
+      },
+      {
+        user: users[0],
+        action: ActivityAction.CREATE,
+        entityType: ActivityEntityType.TASK,
+        entityId: tasks[40].id.toString(),
+        description: 'Created task "Smart contract development"',
+        metadata: { taskTitle: 'Smart contract development' },
+      },
+      {
+        user: users[3],
+        action: ActivityAction.COMMENT,
+        entityType: ActivityEntityType.TASK,
+        entityId: tasks[40].id.toString(),
+        description: 'Added comment with code review',
+        metadata: { commentType: 'code_review' },
+      },
+      {
+        user: users[2],
+        action: ActivityAction.COMPLETE,
+        entityType: ActivityEntityType.TASK,
+        entityId: tasks[18].id.toString(),
+        description: 'Completed marketing task',
+        metadata: { completedDate: '2024-11-30' },
+      },
     ];
 
     for (const activityLogData of activityLogsData) {
@@ -2064,8 +2365,7 @@ async function seed() {
     const notificationsData = [
       {
         title: 'Công việc mới được giao',
-        message:
-          'Bạn đã được giao công việc "Thiết kế mockup trang chủ"',
+        message: 'Bạn đã được giao công việc "Thiết kế mockup trang chủ"',
         type: NotificationType.TASK_ASSIGNED,
         read: false,
         user: users[3],
@@ -2089,7 +2389,8 @@ async function seed() {
       },
       {
         title: 'Task đã hoàn thành',
-        message: 'Phạm Thị Member đã hoàn thành "Design app icon và splash screen"',
+        message:
+          'Phạm Thị Member đã hoàn thành "Design app icon và splash screen"',
         type: NotificationType.TASK_COMPLETED,
         read: true,
         user: users[1],
@@ -2274,10 +2575,10 @@ async function seed() {
 
     // ========== SEED USER SETTINGS ==========
     console.log('\n👤 Seeding User Settings...');
-    
+
     // Get existing themes for linking
     const themes = await themeRepository.find();
-    
+
     const userSettingsData = [
       {
         user: users[0],
@@ -2384,4 +2685,4 @@ async function seed() {
   }
 }
 
-seed();
+void seed();

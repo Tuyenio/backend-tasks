@@ -1,10 +1,18 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Project, ProjectStatus } from '../../entities/project.entity';
 import { User } from '../../entities/user.entity';
 import { Tag } from '../../entities/tag.entity';
-import { ActivityLog, ActivityAction, ActivityEntityType } from '../../entities/activity-log.entity';
+import {
+  ActivityLog,
+  ActivityAction,
+  ActivityEntityType,
+} from '../../entities/activity-log.entity';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { QueryProjectDto } from './dto/query-project.dto';
@@ -28,7 +36,8 @@ export class ProjectsService {
     page: number;
     limit: number;
   }> {
-    const { search, status, memberId, tagId, createdById, sortBy, sortOrder } = query;
+    const { search, status, memberId, tagId, createdById, sortBy, sortOrder } =
+      query;
     const page = query.page || 1;
     const limit = query.limit || 10;
 
@@ -43,7 +52,7 @@ export class ProjectsService {
     if (search) {
       queryBuilder.where(
         '(project.name LIKE :search OR project.description LIKE :search)',
-        { search: `%${search}%` }
+        { search: `%${search}%` },
       );
     }
 
@@ -64,13 +73,24 @@ export class ProjectsService {
 
     // Filter by creator
     if (createdById) {
-      queryBuilder.andWhere('project.createdById = :createdById', { createdById });
+      queryBuilder.andWhere('project.createdById = :createdById', {
+        createdById,
+      });
     }
 
     // Sorting
-    const validSortFields = ['name', 'status', 'progress', 'createdAt', 'startDate', 'endDate', 'deadline'];
+    const validSortFields = [
+      'name',
+      'status',
+      'progress',
+      'createdAt',
+      'startDate',
+      'endDate',
+      'deadline',
+    ];
     const orderDirection = sortOrder === 'ASC' ? 'ASC' : 'DESC';
-    const sortField = sortBy && validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const sortField =
+      sortBy && validSortFields.includes(sortBy) ? sortBy : 'createdAt';
     queryBuilder.orderBy(`project.${sortField}`, orderDirection);
 
     // Pagination
@@ -100,7 +120,10 @@ export class ProjectsService {
     return project;
   }
 
-  async create(createProjectDto: CreateProjectDto, userId: string): Promise<Project> {
+  async create(
+    createProjectDto: CreateProjectDto,
+    userId: string,
+  ): Promise<Project> {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -122,14 +145,24 @@ export class ProjectsService {
     const savedProject = await this.projectsRepository.save(project);
 
     // Log activity
-    await this.logActivity(userId, ActivityAction.CREATE, ActivityEntityType.PROJECT, savedProject.id, {
-      projectName: savedProject.name,
-    });
+    await this.logActivity(
+      userId,
+      ActivityAction.CREATE,
+      ActivityEntityType.PROJECT,
+      savedProject.id,
+      {
+        projectName: savedProject.name,
+      },
+    );
 
     return savedProject;
   }
 
-  async update(id: string, updateProjectDto: UpdateProjectDto, userId: string): Promise<Project> {
+  async update(
+    id: string,
+    updateProjectDto: UpdateProjectDto,
+    userId: string,
+  ): Promise<Project> {
     const project = await this.findOne(id);
 
     // Get user with roles
@@ -144,23 +177,31 @@ export class ProjectsService {
 
     // Check if user has permission (super_admin, admin, or is member/creator)
     const hasAdminRole = user.roles.some(
-      (role) => role.name === 'super_admin' || role.name === 'admin'
+      (role) => role.name === 'super_admin' || role.name === 'admin',
     );
-    const isMember = project.members.some(member => member.id === userId);
+    const isMember = project.members.some((member) => member.id === userId);
     const isCreator = project.createdBy.id === userId;
 
     if (!hasAdminRole && !isMember && !isCreator) {
-      throw new ForbiddenException('You are not authorized to update this project');
+      throw new ForbiddenException(
+        'You are not authorized to update this project',
+      );
     }
 
     Object.assign(project, updateProjectDto);
     const savedProject = await this.projectsRepository.save(project);
 
     // Log activity
-    await this.logActivity(userId, ActivityAction.UPDATE, ActivityEntityType.PROJECT, savedProject.id, {
-      projectName: savedProject.name,
-      changes: updateProjectDto,
-    });
+    await this.logActivity(
+      userId,
+      ActivityAction.UPDATE,
+      ActivityEntityType.PROJECT,
+      savedProject.id,
+      {
+        projectName: savedProject.name,
+        changes: updateProjectDto,
+      },
+    );
 
     return savedProject;
   }
@@ -170,18 +211,30 @@ export class ProjectsService {
 
     // Only creator can delete project
     if (project.createdBy.id !== userId) {
-      throw new ForbiddenException('Only the project creator can delete this project');
+      throw new ForbiddenException(
+        'Only the project creator can delete this project',
+      );
     }
 
     // Log activity before deletion
-    await this.logActivity(userId, ActivityAction.DELETE, ActivityEntityType.PROJECT, project.id, {
-      projectName: project.name,
-    });
+    await this.logActivity(
+      userId,
+      ActivityAction.DELETE,
+      ActivityEntityType.PROJECT,
+      project.id,
+      {
+        projectName: project.name,
+      },
+    );
 
     await this.projectsRepository.remove(project);
   }
 
-  async addMembers(projectId: string, userIds: string[], userId: string): Promise<Project> {
+  async addMembers(
+    projectId: string,
+    userIds: string[],
+    userId: string,
+  ): Promise<Project> {
     const project = await this.findOne(projectId);
 
     // Get user with roles
@@ -196,13 +249,15 @@ export class ProjectsService {
 
     // Check if user has permission (super_admin, admin, or is member/creator)
     const hasAdminRole = user.roles.some(
-      (role) => role.name === 'super_admin' || role.name === 'admin'
+      (role) => role.name === 'super_admin' || role.name === 'admin',
     );
-    const isMember = project.members.some(member => member.id === userId);
+    const isMember = project.members.some((member) => member.id === userId);
     const isCreator = project.createdBy.id === userId;
 
     if (!hasAdminRole && !isMember && !isCreator) {
-      throw new ForbiddenException('You are not authorized to add members to this project');
+      throw new ForbiddenException(
+        'You are not authorized to add members to this project',
+      );
     }
 
     const users = await this.usersRepository.find({
@@ -214,23 +269,33 @@ export class ProjectsService {
     }
 
     // Add only new members
-    const existingMemberIds = project.members.map(m => m.id);
-    const newMembers = users.filter(u => !existingMemberIds.includes(u.id));
+    const existingMemberIds = project.members.map((m) => m.id);
+    const newMembers = users.filter((u) => !existingMemberIds.includes(u.id));
 
     project.members = [...project.members, ...newMembers];
     const savedProject = await this.projectsRepository.save(project);
 
     // Log activity
-    await this.logActivity(userId, ActivityAction.UPDATE, ActivityEntityType.PROJECT, projectId, {
-      projectName: project.name,
-      action: 'added_members',
-      addedMembers: newMembers.map(u => ({ id: u.id, name: u.name })),
-    });
+    await this.logActivity(
+      userId,
+      ActivityAction.UPDATE,
+      ActivityEntityType.PROJECT,
+      projectId,
+      {
+        projectName: project.name,
+        action: 'added_members',
+        addedMembers: newMembers.map((u) => ({ id: u.id, name: u.name })),
+      },
+    );
 
     return savedProject;
   }
 
-  async removeMember(projectId: string, memberId: string, userId: string): Promise<Project> {
+  async removeMember(
+    projectId: string,
+    memberId: string,
+    userId: string,
+  ): Promise<Project> {
     const project = await this.findOne(projectId);
 
     // Get user with roles
@@ -245,33 +310,49 @@ export class ProjectsService {
 
     // Check if user has permission (super_admin, admin, or is creator)
     const hasAdminRole = user.roles.some(
-      (role) => role.name === 'super_admin' || role.name === 'admin'
+      (role) => role.name === 'super_admin' || role.name === 'admin',
     );
     const isCreator = project.createdBy.id === userId;
 
     if (!hasAdminRole && !isCreator) {
-      throw new ForbiddenException('Only the project creator or admin can remove members');
+      throw new ForbiddenException(
+        'Only the project creator or admin can remove members',
+      );
     }
 
     // Cannot remove creator
     if (memberId === project.createdBy.id) {
-      throw new ForbiddenException('Cannot remove the project creator from members');
+      throw new ForbiddenException(
+        'Cannot remove the project creator from members',
+      );
     }
 
-    project.members = project.members.filter(member => member.id !== memberId);
+    project.members = project.members.filter(
+      (member) => member.id !== memberId,
+    );
     const savedProject = await this.projectsRepository.save(project);
 
     // Log activity
-    await this.logActivity(userId, ActivityAction.UPDATE, ActivityEntityType.PROJECT, projectId, {
-      projectName: project.name,
-      action: 'removed_member',
-      removedMemberId: memberId,
-    });
+    await this.logActivity(
+      userId,
+      ActivityAction.UPDATE,
+      ActivityEntityType.PROJECT,
+      projectId,
+      {
+        projectName: project.name,
+        action: 'removed_member',
+        removedMemberId: memberId,
+      },
+    );
 
     return savedProject;
   }
 
-  async addTags(projectId: string, tagIds: string[], userId: string): Promise<Project> {
+  async addTags(
+    projectId: string,
+    tagIds: string[],
+    userId: string,
+  ): Promise<Project> {
     const project = await this.findOne(projectId);
 
     // Get user with roles
@@ -286,13 +367,15 @@ export class ProjectsService {
 
     // Check if user has permission (super_admin, admin, or is member/creator)
     const hasAdminRole = user.roles.some(
-      (role) => role.name === 'super_admin' || role.name === 'admin'
+      (role) => role.name === 'super_admin' || role.name === 'admin',
     );
-    const isMember = project.members.some(member => member.id === userId);
+    const isMember = project.members.some((member) => member.id === userId);
     const isCreator = project.createdBy.id === userId;
 
     if (!hasAdminRole && !isMember && !isCreator) {
-      throw new ForbiddenException('You are not authorized to add tags to this project');
+      throw new ForbiddenException(
+        'You are not authorized to add tags to this project',
+      );
     }
 
     const tags = await this.tagsRepository.find({
@@ -304,47 +387,68 @@ export class ProjectsService {
     }
 
     // Add only new tags
-    const existingTagIds = project.tags.map(t => t.id);
-    const newTags = tags.filter(t => !existingTagIds.includes(t.id));
+    const existingTagIds = project.tags.map((t) => t.id);
+    const newTags = tags.filter((t) => !existingTagIds.includes(t.id));
 
     project.tags = [...project.tags, ...newTags];
     const savedProject = await this.projectsRepository.save(project);
 
     // Log activity
-    await this.logActivity(userId, ActivityAction.UPDATE, ActivityEntityType.PROJECT, projectId, {
-      projectName: project.name,
-      action: 'added_tags',
-      addedTags: newTags.map(t => ({ id: t.id, name: t.name })),
-    });
+    await this.logActivity(
+      userId,
+      ActivityAction.UPDATE,
+      ActivityEntityType.PROJECT,
+      projectId,
+      {
+        projectName: project.name,
+        action: 'added_tags',
+        addedTags: newTags.map((t) => ({ id: t.id, name: t.name })),
+      },
+    );
 
     return savedProject;
   }
 
-  async removeTag(projectId: string, tagId: string, userId: string): Promise<Project> {
+  async removeTag(
+    projectId: string,
+    tagId: string,
+    userId: string,
+  ): Promise<Project> {
     const project = await this.findOne(projectId);
 
     // Check if user is a member or creator
-    const isMember = project.members.some(member => member.id === userId);
+    const isMember = project.members.some((member) => member.id === userId);
     const isCreator = project.createdBy.id === userId;
 
     if (!isMember && !isCreator) {
-      throw new ForbiddenException('You are not authorized to remove tags from this project');
+      throw new ForbiddenException(
+        'You are not authorized to remove tags from this project',
+      );
     }
 
-    project.tags = project.tags.filter(tag => tag.id !== tagId);
+    project.tags = project.tags.filter((tag) => tag.id !== tagId);
     const savedProject = await this.projectsRepository.save(project);
 
     // Log activity
-    await this.logActivity(userId, ActivityAction.UPDATE, ActivityEntityType.PROJECT, projectId, {
-      projectName: project.name,
-      action: 'removed_tag',
-      removedTagId: tagId,
-    });
+    await this.logActivity(
+      userId,
+      ActivityAction.UPDATE,
+      ActivityEntityType.PROJECT,
+      projectId,
+      {
+        projectName: project.name,
+        action: 'removed_tag',
+        removedTagId: tagId,
+      },
+    );
 
     return savedProject;
   }
 
-  async getActivityLogs(projectId: string, limit: number = 50): Promise<ActivityLog[]> {
+  async getActivityLogs(
+    projectId: string,
+    limit: number = 50,
+  ): Promise<ActivityLog[]> {
     await this.findOne(projectId); // Check if project exists
 
     return this.activityLogsRepository.find({
@@ -367,14 +471,18 @@ export class ProjectsService {
     const project = await this.findOne(projectId);
 
     const totalTasks = project.tasks.length;
-    const completedTasks = project.tasks.filter(t => t.status === 'done').length;
-    const inProgressTasks = project.tasks.filter(t => t.status === 'in_progress').length;
-    const todoTasks = project.tasks.filter(t => t.status === 'todo').length;
+    const completedTasks = project.tasks.filter(
+      (t) => t.status === 'done',
+    ).length;
+    const inProgressTasks = project.tasks.filter(
+      (t) => t.status === 'in_progress',
+    ).length;
+    const todoTasks = project.tasks.filter((t) => t.status === 'todo').length;
     const totalMembers = project.members.length;
 
     const now = new Date();
     const overdueTasks = project.tasks.filter(
-      t => t.dueDate && new Date(t.dueDate) < now && t.status !== 'done'
+      (t) => t.dueDate && new Date(t.dueDate) < now && t.status !== 'done',
     ).length;
 
     return {
@@ -396,10 +504,18 @@ export class ProjectsService {
     cancelled: number;
   }> {
     const total = await this.projectsRepository.count();
-    const active = await this.projectsRepository.count({ where: { status: ProjectStatus.ACTIVE } });
-    const completed = await this.projectsRepository.count({ where: { status: ProjectStatus.COMPLETED } });
-    const onHold = await this.projectsRepository.count({ where: { status: ProjectStatus.ON_HOLD } });
-    const cancelled = await this.projectsRepository.count({ where: { status: 'cancelled' as any } });
+    const active = await this.projectsRepository.count({
+      where: { status: ProjectStatus.ACTIVE },
+    });
+    const completed = await this.projectsRepository.count({
+      where: { status: ProjectStatus.COMPLETED },
+    });
+    const onHold = await this.projectsRepository.count({
+      where: { status: ProjectStatus.ON_HOLD },
+    });
+    const cancelled = await this.projectsRepository.count({
+      where: { status: 'cancelled' as any },
+    });
 
     return {
       total,

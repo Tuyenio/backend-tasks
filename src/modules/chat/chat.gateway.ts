@@ -36,8 +36,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: AuthenticatedSocket) {
     try {
-      const token = client.handshake.auth.token || client.handshake.headers.authorization?.split(' ')[1];
-      
+      const token =
+        client.handshake.auth.token ||
+        client.handshake.headers.authorization?.split(' ')[1];
+
       if (!token) {
         client.disconnect();
         return;
@@ -45,14 +47,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       const payload = await this.jwtService.verifyAsync(token);
       client.userId = payload.sub;
-      
+
       if (client.userId) {
         this.connectedUsers.set(client.userId, client.id);
       }
-      
+
       // Notify others that user is online
       this.server.emit('user:online', { userId: client.userId });
-      
+
       console.log(`Client connected: ${client.id}, User: ${client.userId}`);
     } catch (error) {
       console.error('Connection error:', error);
@@ -63,10 +65,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleDisconnect(client: AuthenticatedSocket) {
     if (client.userId) {
       this.connectedUsers.delete(client.userId);
-      
+
       // Notify others that user is offline
       this.server.emit('user:offline', { userId: client.userId });
-      
+
       console.log(`Client disconnected: ${client.id}, User: ${client.userId}`);
     }
   }
@@ -85,7 +87,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Get chat participants
       const chat = await this.chatService.findOne(data.chatId, client.userId);
-      
+
       // Emit to all participants
       chat.members.forEach((participant) => {
         const socketId = this.connectedUsers.get(participant.id);
@@ -111,7 +113,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       const chat = await this.chatService.findOne(data.chatId, client.userId);
-      
+
       // Emit to all participants except sender
       chat.members.forEach((participant) => {
         if (participant.id !== client.userId) {
@@ -140,7 +142,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       const chat = await this.chatService.findOne(data.chatId, client.userId);
-      
+
       // Emit to all participants except sender
       chat.members.forEach((participant) => {
         if (participant.id !== client.userId) {

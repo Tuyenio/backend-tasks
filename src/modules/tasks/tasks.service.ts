@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, LessThan, MoreThanOrEqual, Between } from 'typeorm';
 import { Task, TaskStatus } from '../../entities/task.entity';
@@ -10,12 +15,19 @@ import { ChecklistItem } from '../../entities/checklist-item.entity';
 import { Attachment } from '../../entities/attachment.entity';
 import { Comment } from '../../entities/comment.entity';
 import { CommentReaction } from '../../entities/comment-reaction.entity';
-import { ActivityLog, ActivityAction, ActivityEntityType } from '../../entities/activity-log.entity';
+import {
+  ActivityLog,
+  ActivityAction,
+  ActivityEntityType,
+} from '../../entities/activity-log.entity';
 import { NotificationType } from '../../entities/notification.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { QueryTaskDto } from './dto/query-task.dto';
-import { CreateChecklistItemDto, UpdateChecklistItemDto } from './dto/checklist-item.dto';
+import {
+  CreateChecklistItemDto,
+  UpdateChecklistItemDto,
+} from './dto/checklist-item.dto';
 import { CreateReminderDto } from './dto/create-reminder.dto';
 import { CreateCommentDto, UpdateCommentDto } from './dto/comment.dto';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -54,7 +66,20 @@ export class TasksService {
     page: number;
     limit: number;
   }> {
-    const { search, status, priority, projectId, assigneeId, createdById, tagId, dueDateFrom, dueDateTo, overdue, sortBy, sortOrder } = query;
+    const {
+      search,
+      status,
+      priority,
+      projectId,
+      assigneeId,
+      createdById,
+      tagId,
+      dueDateFrom,
+      dueDateTo,
+      overdue,
+      sortBy,
+      sortOrder,
+    } = query;
     const page = query.page || 1;
     const limit = query.limit || 10;
 
@@ -70,7 +95,10 @@ export class TasksService {
 
     // Search
     if (search) {
-      queryBuilder.where('(task.title LIKE :search OR task.description LIKE :search)', { search: `%${search}%` });
+      queryBuilder.where(
+        '(task.title LIKE :search OR task.description LIKE :search)',
+        { search: `%${search}%` },
+      );
     }
 
     // Filters
@@ -99,7 +127,10 @@ export class TasksService {
     }
 
     if (dueDateFrom && dueDateTo) {
-      queryBuilder.andWhere('task.dueDate BETWEEN :dueDateFrom AND :dueDateTo', { dueDateFrom, dueDateTo });
+      queryBuilder.andWhere(
+        'task.dueDate BETWEEN :dueDateFrom AND :dueDateTo',
+        { dueDateFrom, dueDateTo },
+      );
     } else if (dueDateFrom) {
       queryBuilder.andWhere('task.dueDate >= :dueDateFrom', { dueDateFrom });
     } else if (dueDateTo) {
@@ -109,7 +140,9 @@ export class TasksService {
     if (overdue === 'true') {
       const now = new Date().toISOString();
       queryBuilder.andWhere('task.dueDate < :now', { now });
-      queryBuilder.andWhere('task.status != :doneStatus', { doneStatus: TaskStatus.DONE });
+      queryBuilder.andWhere('task.status != :doneStatus', {
+        doneStatus: TaskStatus.DONE,
+      });
     }
 
     // Sorting
@@ -167,7 +200,7 @@ export class TasksService {
     }
 
     // Check if user is project member
-    const isMember = project.members.some(m => m.id === userId);
+    const isMember = project.members.some((m) => m.id === userId);
     if (!isMember) {
       throw new ForbiddenException('You are not a member of this project');
     }
@@ -184,7 +217,9 @@ export class TasksService {
     task.createdBy = user;
 
     if (createTaskDto.assignedById) {
-      const assignedBy = await this.usersRepository.findOne({ where: { id: createTaskDto.assignedById } });
+      const assignedBy = await this.usersRepository.findOne({
+        where: { id: createTaskDto.assignedById },
+      });
       if (assignedBy) {
         task.assignedBy = assignedBy;
       }
@@ -192,15 +227,22 @@ export class TasksService {
 
     const savedTask = await this.tasksRepository.save(task);
 
-    await this.logActivity(userId, ActivityAction.CREATE, ActivityEntityType.TASK, savedTask.id, {
-      taskTitle: savedTask.title,
-      projectId: project.id,
-    });
+    await this.logActivity(
+      userId,
+      ActivityAction.CREATE,
+      ActivityEntityType.TASK,
+      savedTask.id,
+      {
+        taskTitle: savedTask.title,
+        projectId: project.id,
+      },
+    );
 
     // Notify project members about new task
     if (project.members && project.members.length > 0) {
       for (const member of project.members) {
-        if (member.id !== userId) { // Don't notify the creator
+        if (member.id !== userId) {
+          // Don't notify the creator
           await this.notificationsService.create({
             userId: member.id,
             title: `Công việc mới trong dự án`,
@@ -208,9 +250,11 @@ export class TasksService {
             type: NotificationType.TASK_CREATED,
             link: `/tasks/${savedTask.id}`,
           });
-          
+
           // Notify via WebSocket
-          const unreadCount = await this.notificationsService.getUnreadCount(member.id);
+          const unreadCount = await this.notificationsService.getUnreadCount(
+            member.id,
+          );
           this.notificationsGateway.notifyUnreadCount(member.id, unreadCount);
         }
       }
@@ -219,7 +263,11 @@ export class TasksService {
     return this.findOne(savedTask.id);
   }
 
-  async update(id: string, updateTaskDto: UpdateTaskDto, userId: string): Promise<Task> {
+  async update(
+    id: string,
+    updateTaskDto: UpdateTaskDto,
+    userId: string,
+  ): Promise<Task> {
     const task = await this.findOne(id);
 
     // Check permissions
@@ -229,18 +277,24 @@ export class TasksService {
     Object.assign(task, updateTaskDto);
     const savedTask = await this.tasksRepository.save(task);
 
-    await this.logActivity(userId, ActivityAction.UPDATE, ActivityEntityType.TASK, savedTask.id, {
-      taskTitle: savedTask.title,
-      changes: updateTaskDto,
-    });
+    await this.logActivity(
+      userId,
+      ActivityAction.UPDATE,
+      ActivityEntityType.TASK,
+      savedTask.id,
+      {
+        taskTitle: savedTask.title,
+        changes: updateTaskDto,
+      },
+    );
 
     // Trigger notifications for assignees when task status changes
     if (oldStatus !== updateTaskDto.status && updateTaskDto.status) {
       const statusMessages = {
-        'pending': 'Công việc đang chờ xử lý',
-        'in_progress': 'Công việc đang được xử lý',
-        'completed': 'Công việc đã hoàn thành',
-        'cancelled': 'Công việc đã bị hủy',
+        pending: 'Công việc đang chờ xử lý',
+        in_progress: 'Công việc đang được xử lý',
+        completed: 'Công việc đã hoàn thành',
+        cancelled: 'Công việc đã bị hủy',
       };
 
       // Notify all assignees
@@ -253,9 +307,11 @@ export class TasksService {
             type: NotificationType.TASK_UPDATED,
             link: `/tasks/${savedTask.id}`,
           });
-          
+
           // Notify via WebSocket
-          const unreadCount = await this.notificationsService.getUnreadCount(assignee.id);
+          const unreadCount = await this.notificationsService.getUnreadCount(
+            assignee.id,
+          );
           this.notificationsGateway.notifyUnreadCount(assignee.id, unreadCount);
         }
       }
@@ -272,32 +328,46 @@ export class TasksService {
     const isProjectOwner = task.project.createdBy?.id === userId;
 
     if (!isCreator && !isProjectOwner) {
-      throw new ForbiddenException('Only task creator or project owner can delete this task');
+      throw new ForbiddenException(
+        'Only task creator or project owner can delete this task',
+      );
     }
 
-    await this.logActivity(userId, ActivityAction.DELETE, ActivityEntityType.TASK, task.id, {
-      taskTitle: task.title,
-    });
+    await this.logActivity(
+      userId,
+      ActivityAction.DELETE,
+      ActivityEntityType.TASK,
+      task.id,
+      {
+        taskTitle: task.title,
+      },
+    );
 
     await this.tasksRepository.remove(task);
   }
 
-  async assignUsers(taskId: string, userIds: string[], userId: string): Promise<Task> {
+  async assignUsers(
+    taskId: string,
+    userIds: string[],
+    userId: string,
+  ): Promise<Task> {
     const task = await this.findOne(taskId);
     await this.checkTaskPermission(task, userId);
 
-    const users = await this.usersRepository.find({ where: { id: In(userIds) } });
+    const users = await this.usersRepository.find({
+      where: { id: In(userIds) },
+    });
     if (users.length !== userIds.length) {
       throw new BadRequestException('Some users not found');
     }
 
     // Check if all users are project members OR are already assignees OR are the task creator
     const projectMembers = task.project.members || [];
-    const memberIds = projectMembers.map(m => m.id);
-    const existingAssigneeIds = task.assignees.map(a => a.id);
+    const memberIds = projectMembers.map((m) => m.id);
+    const existingAssigneeIds = task.assignees.map((a) => a.id);
     const isCreator = task.createdBy?.id === userId;
-    
-    const invalidUsers = users.filter(u => {
+
+    const invalidUsers = users.filter((u) => {
       const isMember = memberIds.includes(u.id);
       const isAlreadyAssigned = existingAssigneeIds.includes(u.id);
       const isCreatorOfTask = task.createdBy?.id === u.id;
@@ -305,20 +375,28 @@ export class TasksService {
     });
 
     if (invalidUsers.length > 0) {
-      throw new BadRequestException('Some users are not members of the project');
+      throw new BadRequestException(
+        'Some users are not members of the project',
+      );
     }
 
     // Track old assignees to notify only new ones
-    const oldAssigneeIds = task.assignees.map(a => a.id);
-    const newAssignees = users.filter(u => !oldAssigneeIds.includes(u.id));
+    const oldAssigneeIds = task.assignees.map((a) => a.id);
+    const newAssignees = users.filter((u) => !oldAssigneeIds.includes(u.id));
 
     task.assignees = users;
     await this.tasksRepository.save(task);
 
-    await this.logActivity(userId, ActivityAction.ASSIGN, ActivityEntityType.TASK, taskId, {
-      taskTitle: task.title,
-      assignedUsers: users.map(u => ({ id: u.id, name: u.name })),
-    });
+    await this.logActivity(
+      userId,
+      ActivityAction.ASSIGN,
+      ActivityEntityType.TASK,
+      taskId,
+      {
+        taskTitle: task.title,
+        assignedUsers: users.map((u) => ({ id: u.id, name: u.name })),
+      },
+    );
 
     // Notify newly assigned users
     for (const assignee of newAssignees) {
@@ -329,32 +407,48 @@ export class TasksService {
         type: NotificationType.TASK_ASSIGNED,
         link: `/tasks/${taskId}`,
       });
-      
+
       // Notify via WebSocket
-      const unreadCount = await this.notificationsService.getUnreadCount(assignee.id);
+      const unreadCount = await this.notificationsService.getUnreadCount(
+        assignee.id,
+      );
       this.notificationsGateway.notifyUnreadCount(assignee.id, unreadCount);
     }
 
     return this.findOne(taskId);
   }
 
-  async removeAssignee(taskId: string, assigneeId: string, userId: string): Promise<Task> {
+  async removeAssignee(
+    taskId: string,
+    assigneeId: string,
+    userId: string,
+  ): Promise<Task> {
     const task = await this.findOne(taskId);
     await this.checkTaskPermission(task, userId);
 
-    task.assignees = task.assignees.filter(a => a.id !== assigneeId);
+    task.assignees = task.assignees.filter((a) => a.id !== assigneeId);
     await this.tasksRepository.save(task);
 
-    await this.logActivity(userId, ActivityAction.UPDATE, ActivityEntityType.TASK, taskId, {
-      taskTitle: task.title,
-      action: 'removed_assignee',
-      removedAssigneeId: assigneeId,
-    });
+    await this.logActivity(
+      userId,
+      ActivityAction.UPDATE,
+      ActivityEntityType.TASK,
+      taskId,
+      {
+        taskTitle: task.title,
+        action: 'removed_assignee',
+        removedAssigneeId: assigneeId,
+      },
+    );
 
     return this.findOne(taskId);
   }
 
-  async addTags(taskId: string, tagIds: string[], userId: string): Promise<Task> {
+  async addTags(
+    taskId: string,
+    tagIds: string[],
+    userId: string,
+  ): Promise<Task> {
     const task = await this.findOne(taskId);
     await this.checkTaskPermission(task, userId);
 
@@ -363,8 +457,8 @@ export class TasksService {
       throw new BadRequestException('Some tags not found');
     }
 
-    const existingTagIds = task.tags.map(t => t.id);
-    const newTags = tags.filter(t => !existingTagIds.includes(t.id));
+    const existingTagIds = task.tags.map((t) => t.id);
+    const newTags = tags.filter((t) => !existingTagIds.includes(t.id));
 
     task.tags = [...task.tags, ...newTags];
     await this.tasksRepository.save(task);
@@ -372,18 +466,26 @@ export class TasksService {
     return this.findOne(taskId);
   }
 
-  async removeTag(taskId: string, tagId: string, userId: string): Promise<Task> {
+  async removeTag(
+    taskId: string,
+    tagId: string,
+    userId: string,
+  ): Promise<Task> {
     const task = await this.findOne(taskId);
     await this.checkTaskPermission(task, userId);
 
-    task.tags = task.tags.filter(t => t.id !== tagId);
+    task.tags = task.tags.filter((t) => t.id !== tagId);
     await this.tasksRepository.save(task);
 
     return this.findOne(taskId);
   }
 
   // Checklist Items
-  async addChecklistItem(taskId: string, dto: CreateChecklistItemDto, userId: string): Promise<ChecklistItem> {
+  async addChecklistItem(
+    taskId: string,
+    dto: CreateChecklistItemDto,
+    userId: string,
+  ): Promise<ChecklistItem> {
     const task = await this.findOne(taskId);
     await this.checkTaskPermission(task, userId);
 
@@ -395,11 +497,18 @@ export class TasksService {
     return this.checklistItemsRepository.save(item);
   }
 
-  async updateChecklistItem(taskId: string, itemId: string, dto: UpdateChecklistItemDto, userId: string): Promise<ChecklistItem> {
+  async updateChecklistItem(
+    taskId: string,
+    itemId: string,
+    dto: UpdateChecklistItemDto,
+    userId: string,
+  ): Promise<ChecklistItem> {
     const task = await this.findOne(taskId);
     await this.checkTaskPermission(task, userId);
 
-    const item = await this.checklistItemsRepository.findOne({ where: { id: itemId, task: { id: taskId } } });
+    const item = await this.checklistItemsRepository.findOne({
+      where: { id: itemId, task: { id: taskId } },
+    });
     if (!item) {
       throw new NotFoundException('Checklist item not found');
     }
@@ -408,11 +517,17 @@ export class TasksService {
     return this.checklistItemsRepository.save(item);
   }
 
-  async removeChecklistItem(taskId: string, itemId: string, userId: string): Promise<void> {
+  async removeChecklistItem(
+    taskId: string,
+    itemId: string,
+    userId: string,
+  ): Promise<void> {
     const task = await this.findOne(taskId);
     await this.checkTaskPermission(task, userId);
 
-    const item = await this.checklistItemsRepository.findOne({ where: { id: itemId, task: { id: taskId } } });
+    const item = await this.checklistItemsRepository.findOne({
+      where: { id: itemId, task: { id: taskId } },
+    });
     if (!item) {
       throw new NotFoundException('Checklist item not found');
     }
@@ -421,7 +536,11 @@ export class TasksService {
   }
 
   // Reminders
-  async addReminder(taskId: string, dto: CreateReminderDto, userId: string): Promise<TaskReminder> {
+  async addReminder(
+    taskId: string,
+    dto: CreateReminderDto,
+    userId: string,
+  ): Promise<TaskReminder> {
     const task = await this.findOne(taskId);
     await this.checkTaskPermission(task, userId);
 
@@ -440,11 +559,17 @@ export class TasksService {
     return this.remindersRepository.save(reminder);
   }
 
-  async removeReminder(taskId: string, reminderId: string, userId: string): Promise<void> {
+  async removeReminder(
+    taskId: string,
+    reminderId: string,
+    userId: string,
+  ): Promise<void> {
     const task = await this.findOne(taskId);
     await this.checkTaskPermission(task, userId);
 
-    const reminder = await this.remindersRepository.findOne({ where: { id: reminderId, task: { id: taskId } } });
+    const reminder = await this.remindersRepository.findOne({
+      where: { id: reminderId, task: { id: taskId } },
+    });
     if (!reminder) {
       throw new NotFoundException('Reminder not found');
     }
@@ -466,29 +591,38 @@ export class TasksService {
     });
   }
 
-  async addComment(taskId: string, dto: CreateCommentDto, userId: string): Promise<Comment> {
+  async addComment(
+    taskId: string,
+    dto: CreateCommentDto,
+    userId: string,
+  ): Promise<Comment> {
     try {
-      console.log(`[addComment] Starting - taskId: ${taskId}, userId: ${userId}`);
-      
+      console.log(
+        `[addComment] Starting - taskId: ${taskId}, userId: ${userId}`,
+      );
+
       const task = await this.findOne(taskId);
       console.log(`[addComment] Task found: ${task.id}`);
-      
+
       await this.checkTaskPermission(task, userId);
       console.log(`[addComment] Permission check passed`);
 
-      const user = await this.usersRepository.findOne({ where: { id: userId } });
+      const user = await this.usersRepository.findOne({
+        where: { id: userId },
+      });
       if (!user) {
         throw new NotFoundException('User not found');
       }
       console.log(`[addComment] User found: ${user.id}`);
 
-    const comment = this.commentsRepository.create({
-      content: dto.content,
-      taskId: task.id,
-      authorId: user.id,
-    });
-    comment.task = task;
-    comment.author = user;      const savedComment = await this.commentsRepository.save(comment);
+      const comment = this.commentsRepository.create({
+        content: dto.content,
+        taskId: task.id,
+        authorId: user.id,
+      });
+      comment.task = task;
+      comment.author = user;
+      const savedComment = await this.commentsRepository.save(comment);
       console.log(`[addComment] Comment saved: ${savedComment.id}`);
 
       // Update comments count
@@ -496,10 +630,16 @@ export class TasksService {
       await this.tasksRepository.save(task);
       console.log(`[addComment] Task count updated`);
 
-      await this.logActivity(userId, ActivityAction.COMMENT, ActivityEntityType.TASK, taskId, {
-        taskTitle: task.title,
-        comment: dto.content.substring(0, 100),
-      });
+      await this.logActivity(
+        userId,
+        ActivityAction.COMMENT,
+        ActivityEntityType.TASK,
+        taskId,
+        {
+          taskTitle: task.title,
+          comment: dto.content.substring(0, 100),
+        },
+      );
       console.log(`[addComment] Activity logged`);
 
       const result = await this.commentsRepository.findOne({
@@ -519,7 +659,12 @@ export class TasksService {
     }
   }
 
-  async updateComment(taskId: string, commentId: string, dto: UpdateCommentDto, userId: string): Promise<Comment> {
+  async updateComment(
+    taskId: string,
+    commentId: string,
+    dto: UpdateCommentDto,
+    userId: string,
+  ): Promise<Comment> {
     const comment = await this.commentsRepository.findOne({
       where: { id: commentId, task: { id: taskId } },
       relations: ['author', 'task'],
@@ -537,7 +682,11 @@ export class TasksService {
     return this.commentsRepository.save(comment);
   }
 
-  async removeComment(taskId: string, commentId: string, userId: string): Promise<void> {
+  async removeComment(
+    taskId: string,
+    commentId: string,
+    userId: string,
+  ): Promise<void> {
     const comment = await this.commentsRepository.findOne({
       where: { id: commentId, task: { id: taskId } },
       relations: ['author', 'task'],
@@ -562,8 +711,14 @@ export class TasksService {
   }
 
   // Reactions
-  async addReaction(commentId: string, emoji: string, userId: string): Promise<CommentReaction> {
-    const comment = await this.commentsRepository.findOne({ where: { id: commentId } });
+  async addReaction(
+    commentId: string,
+    emoji: string,
+    userId: string,
+  ): Promise<CommentReaction> {
+    const comment = await this.commentsRepository.findOne({
+      where: { id: commentId },
+    });
     if (!comment) {
       throw new NotFoundException('Comment not found');
     }
@@ -589,7 +744,11 @@ export class TasksService {
     return this.reactionsRepository.save(reaction);
   }
 
-  async removeReaction(commentId: string, reactionId: string, userId: string): Promise<void> {
+  async removeReaction(
+    commentId: string,
+    reactionId: string,
+    userId: string,
+  ): Promise<void> {
     const reaction = await this.reactionsRepository.findOne({
       where: { id: reactionId, comment: { id: commentId } },
       relations: ['user'],
@@ -615,10 +774,22 @@ export class TasksService {
     }
 
     const total = await queryBuilder.getCount();
-    const todo = await queryBuilder.clone().andWhere('task.status = :status', { status: TaskStatus.TODO }).getCount();
-    const inProgress = await queryBuilder.clone().andWhere('task.status = :status', { status: TaskStatus.IN_PROGRESS }).getCount();
-    const review = await queryBuilder.clone().andWhere('task.status = :status', { status: TaskStatus.REVIEW }).getCount();
-    const done = await queryBuilder.clone().andWhere('task.status = :status', { status: TaskStatus.DONE }).getCount();
+    const todo = await queryBuilder
+      .clone()
+      .andWhere('task.status = :status', { status: TaskStatus.TODO })
+      .getCount();
+    const inProgress = await queryBuilder
+      .clone()
+      .andWhere('task.status = :status', { status: TaskStatus.IN_PROGRESS })
+      .getCount();
+    const review = await queryBuilder
+      .clone()
+      .andWhere('task.status = :status', { status: TaskStatus.REVIEW })
+      .getCount();
+    const done = await queryBuilder
+      .clone()
+      .andWhere('task.status = :status', { status: TaskStatus.DONE })
+      .getCount();
 
     const now = new Date();
     const overdue = await queryBuilder
@@ -646,16 +817,26 @@ export class TasksService {
 
     // Allow: project owner, project member, task creator, or task assignee
     const isProjectOwner = project.createdBy?.id === userId;
-    const isProjectMember = project.members.some(m => m.id === userId);
+    const isProjectMember = project.members.some((m) => m.id === userId);
     const isTaskCreator = task.createdBy?.id === userId;
-    const isTaskAssignee = task.assignees?.some(a => a.id === userId);
+    const isTaskAssignee = task.assignees?.some((a) => a.id === userId);
 
-    if (!isProjectOwner && !isProjectMember && !isTaskCreator && !isTaskAssignee) {
-      throw new ForbiddenException('You do not have permission to modify this task');
+    if (
+      !isProjectOwner &&
+      !isProjectMember &&
+      !isTaskCreator &&
+      !isTaskAssignee
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to modify this task',
+      );
     }
   }
 
-  async getActivityLogs(taskId: string, limit: number = 50): Promise<ActivityLog[]> {
+  async getActivityLogs(
+    taskId: string,
+    limit: number = 50,
+  ): Promise<ActivityLog[]> {
     const task = await this.tasksRepository.findOne({ where: { id: taskId } });
     if (!task) {
       throw new NotFoundException('Task not found');

@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsHexColor, MinLength, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsHexColor,
+  MinLength,
+  MaxLength,
+} from 'class-validator';
 
 export class UpdateTagDto {
   @IsOptional()

@@ -20,10 +20,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
   ) {
+    const jwtSecret = configService.get<string>('JWT_SECRET');
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET environment variable is not configured');
+    }
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET', 'your-secret-key'),
+      secretOrKey: jwtSecret,
     });
   }
 
@@ -43,7 +48,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     // DEBUG: Log user roles and permissions
     console.log('🔍 JWT Validate - User:', user.email);
-    console.log('🔍 JWT Validate - Roles:', user.roles?.map(r => ({ name: r.name, permissions: r.permissions })));
+    console.log(
+      '🔍 JWT Validate - Roles:',
+      user.roles?.map((r) => ({ name: r.name, permissions: r.permissions })),
+    );
 
     // Ensure roles are loaded with permissions (simple-array is auto-loaded)
     // This is needed for PermissionsGuard to work properly

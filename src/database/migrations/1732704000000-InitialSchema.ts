@@ -3,12 +3,10 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 export class InitialSchema1732704000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Enable UUID extension
-    await queryRunner.query(
-      `CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`,
-    );
+    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
 
     // ==================== USERS & AUTH ====================
-    
+
     // Create users table
     await queryRunner.query(`
       CREATE TABLE "users" (
@@ -36,8 +34,12 @@ export class InitialSchema1732704000000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_USER_EMAIL" ON "users" ("email")`);
-    await queryRunner.query(`CREATE INDEX "IDX_USER_STATUS" ON "users" ("status")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_USER_EMAIL" ON "users" ("email")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_USER_STATUS" ON "users" ("status")`,
+    );
 
     // Create roles table
     await queryRunner.query(`
@@ -78,10 +80,12 @@ export class InitialSchema1732704000000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_SESSION_USER" ON "user_sessions" ("user_id")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_SESSION_USER" ON "user_sessions" ("user_id")`,
+    );
 
     // ==================== TAGS ====================
-    
+
     await queryRunner.query(`
       CREATE TABLE "tags" (
         "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -93,7 +97,7 @@ export class InitialSchema1732704000000 implements MigrationInterface {
     `);
 
     // ==================== PROJECTS ====================
-    
+
     await queryRunner.query(`
       CREATE TABLE "projects" (
         "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -111,7 +115,9 @@ export class InitialSchema1732704000000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_PROJECT_STATUS" ON "projects" ("status")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_PROJECT_STATUS" ON "projects" ("status")`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE "project_members" (
@@ -130,7 +136,7 @@ export class InitialSchema1732704000000 implements MigrationInterface {
     `);
 
     // ==================== TASKS ====================
-    
+
     await queryRunner.query(`
       CREATE TABLE "tasks" (
         "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -149,10 +155,18 @@ export class InitialSchema1732704000000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_TASK_STATUS" ON "tasks" ("status")`);
-    await queryRunner.query(`CREATE INDEX "IDX_TASK_PRIORITY" ON "tasks" ("priority")`);
-    await queryRunner.query(`CREATE INDEX "IDX_TASK_DUE_DATE" ON "tasks" ("dueDate")`);
-    await queryRunner.query(`CREATE INDEX "IDX_TASK_PROJECT" ON "tasks" ("projectId")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_TASK_STATUS" ON "tasks" ("status")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_TASK_PRIORITY" ON "tasks" ("priority")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_TASK_DUE_DATE" ON "tasks" ("dueDate")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_TASK_PROJECT" ON "tasks" ("projectId")`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE "task_assignees" (
@@ -226,10 +240,12 @@ export class InitialSchema1732704000000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_COMMENT_REACTION" ON "comment_reactions" ("commentId")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_COMMENT_REACTION" ON "comment_reactions" ("commentId")`,
+    );
 
     // ==================== NOTES ====================
-    
+
     await queryRunner.query(`
       CREATE TABLE "notes" (
         "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -245,7 +261,9 @@ export class InitialSchema1732704000000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_NOTE_CREATED_BY" ON "notes" ("createdById")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_NOTE_CREATED_BY" ON "notes" ("createdById")`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE "note_shared_with" (
@@ -256,7 +274,7 @@ export class InitialSchema1732704000000 implements MigrationInterface {
     `);
 
     // ==================== CHAT ====================
-    
+
     await queryRunner.query(`
       CREATE TABLE "chats" (
         "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -288,8 +306,12 @@ export class InitialSchema1732704000000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_MESSAGE_CHAT" ON "messages" ("chatId")`);
-    await queryRunner.query(`CREATE INDEX "IDX_MESSAGE_CREATED_AT" ON "messages" ("createdAt")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_MESSAGE_CHAT" ON "messages" ("chatId")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_MESSAGE_CREATED_AT" ON "messages" ("createdAt")`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE "message_read_status" (
@@ -300,7 +322,7 @@ export class InitialSchema1732704000000 implements MigrationInterface {
     `);
 
     // ==================== NOTIFICATIONS ====================
-    
+
     await queryRunner.query(`
       CREATE TABLE "notifications" (
         "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -314,12 +336,18 @@ export class InitialSchema1732704000000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_NOTIFICATION_USER" ON "notifications" ("userId")`);
-    await queryRunner.query(`CREATE INDEX "IDX_NOTIFICATION_READ" ON "notifications" ("read")`);
-    await queryRunner.query(`CREATE INDEX "IDX_NOTIFICATION_CREATED" ON "notifications" ("createdAt")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_NOTIFICATION_USER" ON "notifications" ("userId")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_NOTIFICATION_READ" ON "notifications" ("read")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_NOTIFICATION_CREATED" ON "notifications" ("createdAt")`,
+    );
 
     // ==================== SYSTEM ====================
-    
+
     await queryRunner.query(`
       CREATE TABLE "activity_logs" (
         "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -333,9 +361,15 @@ export class InitialSchema1732704000000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_ACTIVITY_USER" ON "activity_logs" ("userId")`);
-    await queryRunner.query(`CREATE INDEX "IDX_ACTIVITY_ENTITY" ON "activity_logs" ("entityType")`);
-    await queryRunner.query(`CREATE INDEX "IDX_ACTIVITY_CREATED" ON "activity_logs" ("createdAt")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_ACTIVITY_USER" ON "activity_logs" ("userId")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_ACTIVITY_ENTITY" ON "activity_logs" ("entityType")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_ACTIVITY_CREATED" ON "activity_logs" ("createdAt")`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE "custom_themes" (
@@ -362,7 +396,7 @@ export class InitialSchema1732704000000 implements MigrationInterface {
     `);
 
     // ==================== INSERT DEFAULT DATA ====================
-    
+
     // Insert default roles
     await queryRunner.query(`
       INSERT INTO "roles" ("id", "name", "displayName", "description", "isSystem", "color", "permissions")
@@ -399,7 +433,9 @@ export class InitialSchema1732704000000 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE IF EXISTS "custom_themes" CASCADE`);
     await queryRunner.query(`DROP TABLE IF EXISTS "activity_logs" CASCADE`);
     await queryRunner.query(`DROP TABLE IF EXISTS "notifications" CASCADE`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "message_read_status" CASCADE`);
+    await queryRunner.query(
+      `DROP TABLE IF EXISTS "message_read_status" CASCADE`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS "messages" CASCADE`);
     await queryRunner.query(`DROP TABLE IF EXISTS "chat_members" CASCADE`);
     await queryRunner.query(`DROP TABLE IF EXISTS "chats" CASCADE`);
@@ -408,7 +444,9 @@ export class InitialSchema1732704000000 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE IF EXISTS "comment_reactions" CASCADE`);
     await queryRunner.query(`DROP TABLE IF EXISTS "task_comments" CASCADE`);
     await queryRunner.query(`DROP TABLE IF EXISTS "attachments" CASCADE`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "task_checklist_items" CASCADE`);
+    await queryRunner.query(
+      `DROP TABLE IF EXISTS "task_checklist_items" CASCADE`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS "task_reminders" CASCADE`);
     await queryRunner.query(`DROP TABLE IF EXISTS "task_tags" CASCADE`);
     await queryRunner.query(`DROP TABLE IF EXISTS "task_assignees" CASCADE`);

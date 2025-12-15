@@ -66,13 +66,11 @@ describe('AuthController (e2e)', () => {
       const email = `test${Date.now()}@example.com`;
       const password = 'Password123!';
 
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({
-          email,
-          password,
-          name: 'Test User',
-        });
+      await request(app.getHttpServer()).post('/api/auth/register').send({
+        email,
+        password,
+        name: 'Test User',
+      });
 
       // Then try to login
       return request(app.getHttpServer())
@@ -101,9 +99,7 @@ describe('AuthController (e2e)', () => {
 
   describe('/api/auth/profile (GET)', () => {
     it('should return 401 without token', () => {
-      return request(app.getHttpServer())
-        .get('/api/auth/profile')
-        .expect(401);
+      return request(app.getHttpServer()).get('/api/auth/profile').expect(401);
     });
 
     it('should return user profile with valid token', async () => {
@@ -111,13 +107,11 @@ describe('AuthController (e2e)', () => {
       const email = `test${Date.now()}@example.com`;
       const password = 'Password123!';
 
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({
-          email,
-          password,
-          name: 'Test User',
-        });
+      await request(app.getHttpServer()).post('/api/auth/register').send({
+        email,
+        password,
+        name: 'Test User',
+      });
 
       const loginRes = await request(app.getHttpServer())
         .post('/api/auth/login')

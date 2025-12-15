@@ -11,6 +11,7 @@ import {
   Query,
   Res,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
@@ -33,18 +34,21 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 requests per minute
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
 
   @Post('login')
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute
   @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }
 
   @Post('forgot-password')
+  @Throttle({ default: { limit: 3, ttl: 300000 } }) // 3 requests per 5 minutes
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     return this.authService.forgotPassword(forgotPasswordDto);
@@ -90,7 +94,7 @@ export class AuthController {
         name: user.name,
         isActive: user.isActive,
         isLocked: user.isLocked,
-        roles: user.roles?.map(r => ({
+        roles: user.roles?.map((r) => ({
           id: r.id,
           name: r.name,
           displayName: r.displayName,
@@ -149,11 +153,11 @@ export class AuthController {
   async googleAuthCallback(@Request() req, @Res() res: Response) {
     // User data from Google Strategy
     const { accessToken, user } = req.user;
-    
+
     // Redirect to frontend with token and user data
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     const redirectUrl = `${frontendUrl}/auth-callback?token=${accessToken}&user=${encodeURIComponent(JSON.stringify(user))}`;
-    
+
     return res.redirect(redirectUrl);
   }
 }

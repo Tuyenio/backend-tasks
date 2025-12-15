@@ -35,15 +35,27 @@ export class SearchService {
     };
 
     if (type === SearchType.ALL || type === SearchType.TASKS) {
-      results.results.tasks = await this.searchTasks(searchPattern, limit, userId);
+      results.results.tasks = await this.searchTasks(
+        searchPattern,
+        limit,
+        userId,
+      );
     }
 
     if (type === SearchType.ALL || type === SearchType.PROJECTS) {
-      results.results.projects = await this.searchProjects(searchPattern, limit, userId);
+      results.results.projects = await this.searchProjects(
+        searchPattern,
+        limit,
+        userId,
+      );
     }
 
     if (type === SearchType.ALL || type === SearchType.NOTES) {
-      results.results.notes = await this.searchNotes(searchPattern, limit, userId);
+      results.results.notes = await this.searchNotes(
+        searchPattern,
+        limit,
+        userId,
+      );
     }
 
     if (type === SearchType.ALL || type === SearchType.USERS) {
@@ -51,7 +63,11 @@ export class SearchService {
     }
 
     if (type === SearchType.ALL || type === SearchType.CHATS) {
-      results.results.chats = await this.searchChats(searchPattern, limit, userId);
+      results.results.chats = await this.searchChats(
+        searchPattern,
+        limit,
+        userId,
+      );
     }
 
     // Calculate total results
@@ -70,10 +86,9 @@ export class SearchService {
       .leftJoinAndSelect('task.assignees', 'assignees')
       .leftJoin('task.assignees', 'userAssignee')
       .leftJoin('project.members', 'projectMember')
-      .where(
-        '(task.title ILIKE :pattern OR task.description ILIKE :pattern)',
-        { pattern },
-      )
+      .where('(task.title ILIKE :pattern OR task.description ILIKE :pattern)', {
+        pattern,
+      })
       .andWhere(
         '(userAssignee.id = :userId OR projectMember.userId = :userId OR task.createdById = :userId)',
         { userId },
@@ -125,10 +140,9 @@ export class SearchService {
       .createQueryBuilder('note')
       .leftJoinAndSelect('note.owner', 'owner')
       .leftJoin('note.sharedWith', 'shared')
-      .where(
-        '(note.title ILIKE :pattern OR note.content ILIKE :pattern)',
-        { pattern },
-      )
+      .where('(note.title ILIKE :pattern OR note.content ILIKE :pattern)', {
+        pattern,
+      })
       .andWhere('(note.ownerId = :userId OR shared.id = :userId)', { userId })
       .select([
         'note.id',
@@ -146,10 +160,9 @@ export class SearchService {
   private async searchUsers(pattern: string, limit: number) {
     return this.usersRepository
       .createQueryBuilder('user')
-      .where(
-        '(user.name ILIKE :pattern OR user.email ILIKE :pattern)',
-        { pattern },
-      )
+      .where('(user.name ILIKE :pattern OR user.email ILIKE :pattern)', {
+        pattern,
+      })
       .andWhere('user.isActive = :isActive', { isActive: true })
       .select([
         'user.id',
@@ -259,10 +272,9 @@ export class SearchService {
     if (type === SearchType.ALL || type === SearchType.USERS) {
       const users = await this.usersRepository
         .createQueryBuilder('user')
-        .where(
-          '(user.name ILIKE :pattern OR user.email ILIKE :pattern)',
-          { pattern: searchPattern },
-        )
+        .where('(user.name ILIKE :pattern OR user.email ILIKE :pattern)', {
+          pattern: searchPattern,
+        })
         .andWhere('user.isActive = :isActive', { isActive: true })
         .select(['user.id', 'user.name'])
         .take(limit)

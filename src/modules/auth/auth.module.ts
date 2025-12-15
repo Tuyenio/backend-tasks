@@ -20,7 +20,7 @@ import { ChatModule } from '../chat/chat.module';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET', 'your-secret-key'),
+        secret: configService.get<string>('JWT_SECRET'),
         signOptions: {
           expiresIn: '7d',
         },

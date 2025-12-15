@@ -1,5 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import type { Request } from 'express';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
 import { User } from '../../entities/user.entity';
 
@@ -17,8 +18,8 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
-    const user: User = request.user;
+    const request = context.switchToHttp().getRequest<Request>();
+    const user = request.user as unknown as User | undefined;
 
     if (!user) {
       return false;
@@ -27,11 +28,16 @@ export class PermissionsGuard implements CanActivate {
     // DEBUG: Log permission check
     console.log('🔒 PermissionsGuard - Checking permissions');
     console.log('🔒 User:', user.email);
-    console.log('🔒 User Roles:', user.roles?.map(r => ({ name: r.name, permissions: r.permissions })));
+    console.log(
+      '🔒 User Roles:',
+      user.roles?.map((r) => ({ name: r.name, permissions: r.permissions })),
+    );
     console.log('🔒 Required Permissions:', requiredPermissions);
 
     // Super admin has all permissions
-    const isSuperAdmin = user.roles?.some(role => role.name === 'super_admin');
+    const isSuperAdmin = user.roles?.some(
+      (role) => role.name === 'super_admin',
+    );
     if (isSuperAdmin) {
       console.log('✅ Super admin bypass granted');
       return true;
@@ -42,7 +48,7 @@ export class PermissionsGuard implements CanActivate {
     console.log('🔒 User Permissions:', userPermissions);
 
     // Check if user has all required permissions
-    const hasPermissions = requiredPermissions.every(permission =>
+    const hasPermissions = requiredPermissions.every((permission) =>
       userPermissions.includes(permission),
     );
     console.log('🔒 Has Permissions:', hasPermissions);
@@ -54,9 +60,11 @@ export class PermissionsGuard implements CanActivate {
     const permissionsSet = new Set<string>();
 
     if (user.roles && Array.isArray(user.roles)) {
-      user.roles.forEach(role => {
+      user.roles.forEach((role) => {
         if (role.permissions && Array.isArray(role.permissions)) {
-          role.permissions.forEach(permission => permissionsSet.add(permission));
+          role.permissions.forEach((permission) =>
+            permissionsSet.add(permission),
+          );
         }
       });
     }

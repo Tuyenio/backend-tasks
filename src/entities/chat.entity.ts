@@ -39,8 +39,8 @@ export class Chat {
   })
   members: User[];
 
-  @OneToMany('Message', 'chat')
-  messages: any[];
+  @OneToMany(() => Message, 'chat')
+  messages: Message[];
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

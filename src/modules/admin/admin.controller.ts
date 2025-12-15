@@ -129,7 +129,10 @@ export class AdminController {
 
   @Patch('users/:id/roles')
   @RequirePermissions('users.manage')
-  async assignRoles(@Param('id') id: string, @Body('roleIds') roleIds: string[]) {
+  async assignRoles(
+    @Param('id') id: string,
+    @Body('roleIds') roleIds: string[],
+  ) {
     const user = await this.adminService.assignRolesToUser(id, roleIds);
     const { password, ...result } = user;
     return result;

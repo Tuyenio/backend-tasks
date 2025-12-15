@@ -1,4 +1,15 @@
-import { IsString, IsOptional, IsHexColor, IsEnum, IsDateString, IsInt, Min, Max, MinLength, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsHexColor,
+  IsEnum,
+  IsDateString,
+  IsInt,
+  Min,
+  Max,
+  MinLength,
+  MaxLength,
+} from 'class-validator';
 import { ProjectStatus } from '../../../entities/project.entity';
 
 export class CreateProjectDto {
