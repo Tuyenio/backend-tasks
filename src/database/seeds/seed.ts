@@ -2081,40 +2081,82 @@ async function seed() {
     console.log('\n💬 Seeding Chats...');
 
     const chatsData = [
+      // ===== GROUP CHATS =====
       {
         name: 'Team Website Redesign',
         type: ChatType.GROUP,
         members: [users[0], users[1], users[2], users[3]],
       },
       {
-        name: undefined, // Direct chat
-        type: ChatType.DIRECT,
-        members: [users[0], users[1]],
-      },
-      {
         name: 'Mobile Dev Team',
         type: ChatType.GROUP,
-        members: [users[1], users[2], users[3]],
-      },
-      {
-        name: undefined, // Direct chat
-        type: ChatType.DIRECT,
-        members: [users[2], users[3]],
+        members: [users[1], users[2], users[3], users[4]],
       },
       {
         name: 'AI/ML Research',
         type: ChatType.GROUP,
-        members: [users[0], users[1], users[3]],
-      },
-      {
-        name: undefined, // Direct chat
-        type: ChatType.DIRECT,
-        members: [users[0], users[3]],
+        members: [users[0], users[1], users[3], users[4]],
       },
       {
         name: 'E-commerce Team',
         type: ChatType.GROUP,
-        members: [users[1], users[2], users[3]],
+        members: [users[1], users[2], users[3], users[4]],
+      },
+
+      // ===== DIRECT CHATS (tất cả cặp users 1-to-1) =====
+      // users[0] with [1,2,3,4]
+      {
+        name: undefined,
+        type: ChatType.DIRECT,
+        members: [users[0], users[1]],
+      },
+      {
+        name: undefined,
+        type: ChatType.DIRECT,
+        members: [users[0], users[2]],
+      },
+      {
+        name: undefined,
+        type: ChatType.DIRECT,
+        members: [users[0], users[3]],
+      },
+      {
+        name: undefined,
+        type: ChatType.DIRECT,
+        members: [users[0], users[4]],
+      },
+      // users[1] with [2,3,4]
+      {
+        name: undefined,
+        type: ChatType.DIRECT,
+        members: [users[1], users[2]],
+      },
+      {
+        name: undefined,
+        type: ChatType.DIRECT,
+        members: [users[1], users[3]],
+      },
+      {
+        name: undefined,
+        type: ChatType.DIRECT,
+        members: [users[1], users[4]],
+      },
+      // users[2] with [3,4]
+      {
+        name: undefined,
+        type: ChatType.DIRECT,
+        members: [users[2], users[3]],
+      },
+      {
+        name: undefined,
+        type: ChatType.DIRECT,
+        members: [users[2], users[4]],
+      },
+      // users[3] with [4]
+      {
+        name: undefined,
+        type: ChatType.DIRECT,
+        members: [users[3], users[4]],
       },
     ];
 
@@ -2129,11 +2171,14 @@ async function seed() {
       chats.push(chat);
     }
     console.log(`✅ Created ${chats.length} chats`);
+    console.log(`   - ${4} group chats`);
+    console.log(`   - ${10} direct chats (1-to-1 between all users)`);
 
     // ========== SEED MESSAGES ==========
     console.log('\n💬 Seeding Messages...');
 
     const messagesData = [
+      // ===== GROUP CHATS =====
       {
         content: 'Chào mọi người! Bắt đầu dự án nào 🚀',
         type: MessageType.TEXT,
@@ -2163,90 +2208,6 @@ async function seed() {
         readBy: [users[0], users[1], users[3]],
       },
       {
-        content: 'Hi, có thể review code của em không?',
-        type: MessageType.TEXT,
-        chat: chats[1],
-        sender: users[1],
-        readBy: [users[0], users[1]],
-      },
-      {
-        content: 'OK, gửi PR link đi',
-        type: MessageType.TEXT,
-        chat: chats[1],
-        sender: users[0],
-        readBy: [users[0], users[1]],
-      },
-      {
-        content: 'Mobile app build sẵn sàng cho testing',
-        type: MessageType.TEXT,
-        chat: chats[2],
-        sender: users[1],
-        readBy: [users[1], users[2]],
-      },
-      {
-        content: 'Firebase push notification đã test OK',
-        type: MessageType.TEXT,
-        chat: chats[2],
-        sender: users[3],
-        readBy: [users[1], users[2], users[3]],
-      },
-      {
-        content: 'Cần help với responsive design không?',
-        type: MessageType.TEXT,
-        chat: chats[2],
-        sender: users[2],
-        readBy: [users[1], users[2], users[3]],
-      },
-      {
-        content: 'Yes please! Đang stuck ở tablet layout',
-        type: MessageType.TEXT,
-        chat: chats[2],
-        sender: users[3],
-        readBy: [users[2], users[3]],
-      },
-      {
-        content: 'API documentation đã update chưa?',
-        type: MessageType.TEXT,
-        chat: chats[3],
-        sender: users[2],
-        readBy: [users[2], users[3]],
-      },
-      {
-        content: 'Rồi, check Swagger UI nhé',
-        type: MessageType.TEXT,
-        chat: chats[3],
-        sender: users[3],
-        readBy: [users[2], users[3]],
-      },
-      {
-        content: 'AI model training hoàn thành! Accuracy 94.5%',
-        type: MessageType.TEXT,
-        chat: chats[4],
-        sender: users[0],
-        readBy: [users[0], users[1], users[3]],
-      },
-      {
-        content: 'Impressive! Ready for production?',
-        type: MessageType.TEXT,
-        chat: chats[4],
-        sender: users[1],
-        readBy: [users[0], users[1], users[3]],
-      },
-      {
-        content: 'Cần test thêm với real data, nhưng promising',
-        type: MessageType.TEXT,
-        chat: chats[4],
-        sender: users[0],
-        readBy: [users[0], users[1], users[3]],
-      },
-      {
-        content: 'GPT-4 API response time khá tốt',
-        type: MessageType.TEXT,
-        chat: chats[4],
-        sender: users[3],
-        readBy: [users[0], users[1], users[3]],
-      },
-      {
         content: 'Task assignment cho sprint này xong chưa?',
         type: MessageType.TEXT,
         chat: chats[0],
@@ -2261,95 +2222,272 @@ async function seed() {
         readBy: [users[0], users[1], users[2], users[3]],
       },
       {
-        content: 'Product catalog có search functionality chưa?',
-        type: MessageType.TEXT,
-        chat: chats[6],
-        sender: users[2],
-        readBy: [users[1], users[2], users[3]],
-      },
-      {
-        content: 'Có rồi! Full-text search với Elasticsearch',
-        type: MessageType.TEXT,
-        chat: chats[6],
-        sender: users[1],
-        readBy: [users[1], users[2], users[3]],
-      },
-      {
-        content: 'Payment gateway testing credentials ở đâu?',
-        type: MessageType.TEXT,
-        chat: chats[6],
-        sender: users[3],
-        readBy: [users[1], users[3]],
-      },
-      {
-        content: 'Check note "E-commerce Payment Integration"',
-        type: MessageType.TEXT,
-        chat: chats[6],
-        sender: users[2],
-        readBy: [users[2], users[3]],
-      },
-      {
-        content: 'Meeting lúc 3PM để discuss architecture',
-        type: MessageType.TEXT,
-        chat: chats[4],
-        sender: users[0],
-        readBy: [users[0], users[1]],
-      },
-      {
-        content: 'Roger that 👍',
-        type: MessageType.TEXT,
-        chat: chats[4],
-        sender: users[1],
-        readBy: [users[0], users[1], users[3]],
-      },
-      {
-        content: 'Database migration script ready for review',
-        type: MessageType.TEXT,
-        chat: chats[1],
-        sender: users[1],
-        readBy: [users[0], users[1]],
-      },
-      {
-        content: 'Backup plan có sẵn chưa?',
-        type: MessageType.TEXT,
-        chat: chats[1],
-        sender: users[0],
-        readBy: [users[0], users[1]],
-      },
-      {
-        content: 'Yes, đã test rollback procedure',
-        type: MessageType.TEXT,
-        chat: chats[1],
-        sender: users[1],
-        readBy: [users[0], users[1]],
-      },
-      {
         content: 'Security audit report attached',
         type: MessageType.FILE,
         chat: chats[0],
         sender: users[1],
         readBy: [users[0], users[1]],
       },
+
+      // ===== DIRECT CHATS =====
+      // users[0] ↔ users[1]
       {
-        content: 'IoT devices connect thành công 🎉',
+        content: 'Hi, có thể review code của em không?',
         type: MessageType.TEXT,
-        chat: chats[2],
+        chat: chats[4],
+        sender: users[1],
+        readBy: [users[0], users[1]],
+      },
+      {
+        content: 'OK, gửi PR link đi',
+        type: MessageType.TEXT,
+        chat: chats[4],
+        sender: users[0],
+        readBy: [users[0], users[1]],
+      },
+      {
+        content: 'Database migration script ready for review',
+        type: MessageType.TEXT,
+        chat: chats[4],
+        sender: users[1],
+        readBy: [users[0], users[1]],
+      },
+      {
+        content: 'Backup plan có sẵn chưa?',
+        type: MessageType.TEXT,
+        chat: chats[4],
+        sender: users[0],
+        readBy: [users[0], users[1]],
+      },
+      {
+        content: 'Yes, đã test rollback procedure',
+        type: MessageType.TEXT,
+        chat: chats[4],
+        sender: users[1],
+        readBy: [users[0], users[1]],
+      },
+
+      // users[0] ↔ users[2]
+      {
+        content: 'Chào bạn, project timeline thế nào rồi?',
+        type: MessageType.TEXT,
+        chat: chats[5],
+        sender: users[0],
+        readBy: [users[0], users[2]],
+      },
+      {
+        content: 'Timeline đang on track, hoàn thành 70%',
+        type: MessageType.TEXT,
+        chat: chats[5],
         sender: users[2],
-        readBy: [users[1], users[2], users[3]],
+        readBy: [users[0], users[2]],
+      },
+
+      // users[0] ↔ users[3]
+      {
+        content: 'AI model training hoàn thành! Accuracy 94.5%',
+        type: MessageType.TEXT,
+        chat: chats[6],
+        sender: users[0],
+        readBy: [users[0], users[3]],
+      },
+      {
+        content: 'Impressive! Ready for production?',
+        type: MessageType.TEXT,
+        chat: chats[6],
+        sender: users[3],
+        readBy: [users[0], users[3]],
+      },
+      {
+        content: 'Cần test thêm với real data, nhưng promising',
+        type: MessageType.TEXT,
+        chat: chats[6],
+        sender: users[0],
+        readBy: [users[0], users[3]],
       },
       {
         content: 'Smart contract deployed to testnet',
         type: MessageType.TEXT,
-        chat: chats[5],
+        chat: chats[6],
         sender: users[3],
         readBy: [users[0], users[3]],
       },
       {
         content: 'Contract address: 0x123...abc',
         type: MessageType.TEXT,
-        chat: chats[5],
+        chat: chats[6],
         sender: users[3],
         readBy: [users[0], users[3]],
+      },
+
+      // users[0] ↔ users[4] (WELCOME MESSAGES cho user mới)
+      {
+        content: `Chào ${users[4].name}! 🎉 Welcome to the team!`,
+        type: MessageType.TEXT,
+        chat: chats[7],
+        sender: users[0],
+        readBy: [users[0], users[4]],
+      },
+      {
+        content: 'Cảm ơn, rất vui được làm việc với cả team!',
+        type: MessageType.TEXT,
+        chat: chats[7],
+        sender: users[4],
+        readBy: [users[0], users[4]],
+      },
+
+      // users[1] ↔ users[2]
+      {
+        content: 'Code review lúc nào bạn rảnh?',
+        type: MessageType.TEXT,
+        chat: chats[8],
+        sender: users[1],
+        readBy: [users[1], users[2]],
+      },
+      {
+        content: 'Chiều nay được, gửi PR link đi',
+        type: MessageType.TEXT,
+        chat: chats[8],
+        sender: users[2],
+        readBy: [users[1], users[2]],
+      },
+
+      // users[1] ↔ users[3]
+      {
+        content: 'Mobile app build sẵn sàng cho testing',
+        type: MessageType.TEXT,
+        chat: chats[9],
+        sender: users[1],
+        readBy: [users[1], users[3]],
+      },
+      {
+        content: 'Firebase push notification đã test OK',
+        type: MessageType.TEXT,
+        chat: chats[9],
+        sender: users[3],
+        readBy: [users[1], users[3]],
+      },
+      {
+        content: 'Cần help với responsive design không?',
+        type: MessageType.TEXT,
+        chat: chats[9],
+        sender: users[3],
+        readBy: [users[1], users[3]],
+      },
+
+      // users[1] ↔ users[4] (WELCOME MESSAGES cho user mới)
+      {
+        content: `Welcome ${users[4].name}! 👋 Glad you joined us`,
+        type: MessageType.TEXT,
+        chat: chats[10],
+        sender: users[1],
+        readBy: [users[1], users[4]],
+      },
+      {
+        content: 'Cảm ơn bạn! Hân hạnh gia nhập team',
+        type: MessageType.TEXT,
+        chat: chats[10],
+        sender: users[4],
+        readBy: [users[1], users[4]],
+      },
+
+      // users[2] ↔ users[3]
+      {
+        content: 'API documentation đã update chưa?',
+        type: MessageType.TEXT,
+        chat: chats[11],
+        sender: users[2],
+        readBy: [users[2], users[3]],
+      },
+      {
+        content: 'Rồi, check Swagger UI nhé',
+        type: MessageType.TEXT,
+        chat: chats[11],
+        sender: users[3],
+        readBy: [users[2], users[3]],
+      },
+      {
+        content: 'IoT devices connect thành công 🎉',
+        type: MessageType.TEXT,
+        chat: chats[11],
+        sender: users[2],
+        readBy: [users[2], users[3]],
+      },
+
+      // users[2] ↔ users[4] (WELCOME MESSAGES cho user mới)
+      {
+        content: `Hi ${users[4].name}! Welcome on board 🚀`,
+        type: MessageType.TEXT,
+        chat: chats[12],
+        sender: users[2],
+        readBy: [users[2], users[4]],
+      },
+      {
+        content: 'Thanks! Excited to start',
+        type: MessageType.TEXT,
+        chat: chats[12],
+        sender: users[4],
+        readBy: [users[2], users[4]],
+      },
+
+      // users[3] ↔ users[4] (WELCOME MESSAGES cho user mới)
+      {
+        content: `Hey ${users[4].name}! 👊 Welcome to the team`,
+        type: MessageType.TEXT,
+        chat: chats[13],
+        sender: users[3],
+        readBy: [users[3], users[4]],
+      },
+      {
+        content: 'Thank you! Ready to contribute 💪',
+        type: MessageType.TEXT,
+        chat: chats[13],
+        sender: users[4],
+        readBy: [users[3], users[4]],
+      },
+
+      // ===== GROUP CHATS =====
+      {
+        content: 'Product catalog có search functionality chưa?',
+        type: MessageType.TEXT,
+        chat: chats[3],
+        sender: users[2],
+        readBy: [users[1], users[2], users[3]],
+      },
+      {
+        content: 'Có rồi! Full-text search với Elasticsearch',
+        type: MessageType.TEXT,
+        chat: chats[3],
+        sender: users[1],
+        readBy: [users[1], users[2], users[3]],
+      },
+      {
+        content: 'Payment gateway testing credentials ở đâu?',
+        type: MessageType.TEXT,
+        chat: chats[3],
+        sender: users[3],
+        readBy: [users[1], users[3]],
+      },
+      {
+        content: 'Check note "E-commerce Payment Integration"',
+        type: MessageType.TEXT,
+        chat: chats[3],
+        sender: users[2],
+        readBy: [users[2], users[3]],
+      },
+      {
+        content: 'Meeting lúc 3PM để discuss architecture',
+        type: MessageType.TEXT,
+        chat: chats[2],
+        sender: users[0],
+        readBy: [users[0], users[1]],
+      },
+      {
+        content: 'Roger that 👍',
+        type: MessageType.TEXT,
+        chat: chats[2],
+        sender: users[1],
+        readBy: [users[0], users[1]],
       },
     ];
 
