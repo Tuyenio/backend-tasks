@@ -638,9 +638,7 @@ export class AuthService {
       }
 
       if (invitation.status !== InvitationStatus.PENDING) {
-        throw new BadRequestException(
-          'Lời mời đã được sử dụng hoặc bị hủy',
-        );
+        throw new BadRequestException('Lời mời đã được sử dụng hoặc bị hủy');
       }
 
       if (invitation.expiresAt < new Date()) {

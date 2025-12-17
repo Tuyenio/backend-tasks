@@ -53,7 +53,9 @@ export class UploadService {
     }
 
     if (!this.allowedImageTypes.includes(file.mimetype)) {
-      throw new BadRequestException('Chỉ cho phép các tệp hình ảnh cho đại diện');
+      throw new BadRequestException(
+        'Chỉ cho phép các tệp hình ảnh cho đại diện',
+      );
     }
 
     if (file.size > this.maxFileSize) {

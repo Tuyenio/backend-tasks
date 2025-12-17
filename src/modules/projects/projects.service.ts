@@ -183,9 +183,7 @@ export class ProjectsService {
     const isCreator = project.createdBy.id === userId;
 
     if (!hasAdminRole && !isMember && !isCreator) {
-      throw new ForbiddenException(
-        'Bạn không có quyền cập nhật dự án này',
-      );
+      throw new ForbiddenException('Bạn không có quyền cập nhật dự án này');
     }
 
     Object.assign(project, updateProjectDto);
@@ -373,9 +371,7 @@ export class ProjectsService {
     const isCreator = project.createdBy.id === userId;
 
     if (!hasAdminRole && !isMember && !isCreator) {
-      throw new ForbiddenException(
-        'Bạn không có quyền thêm tag vào dự án này',
-      );
+      throw new ForbiddenException('Bạn không có quyền thêm tag vào dự án này');
     }
 
     const tags = await this.tagsRepository.find({
@@ -421,9 +417,7 @@ export class ProjectsService {
     const isCreator = project.createdBy.id === userId;
 
     if (!isMember && !isCreator) {
-      throw new ForbiddenException(
-        'Bạn không có quyền xoá tag khỏi dự án này',
-      );
+      throw new ForbiddenException('Bạn không có quyền xoá tag khỏi dự án này');
     }
 
     project.tags = project.tags.filter((tag) => tag.id !== tagId);

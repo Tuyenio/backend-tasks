@@ -142,7 +142,9 @@ export class UsersService {
         where: { name: 'member' },
       });
       if (!memberRole) {
-        throw new NotFoundException('Vai trò thành viên mặc định không tìm thấy');
+        throw new NotFoundException(
+          'Vai trò thành viên mặc định không tìm thấy',
+        );
       }
       roles = [memberRole];
     }

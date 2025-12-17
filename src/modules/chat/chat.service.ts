@@ -52,7 +52,9 @@ export class ChatService {
     });
 
     if (participants.length !== uniqueParticipantIds.length) {
-      throw new BadRequestException('Một hoặc nhiều người tham gia không tìm thấy');
+      throw new BadRequestException(
+        'Một hoặc nhiều người tham gia không tìm thấy',
+      );
     }
 
     // Check if direct chat already exists
@@ -127,7 +129,9 @@ export class ChatService {
     // Check if user is a participant
     const isParticipant = chat.members.some((p) => p.id === userId);
     if (!isParticipant) {
-      throw new ForbiddenException('Bạn không phải là người tham gia trực tiếp');
+      throw new ForbiddenException(
+        'Bạn không phải là người tham gia trực tiếp',
+      );
     }
 
     return chat;
@@ -164,7 +168,9 @@ export class ChatService {
 
     // Only group chats can add participants
     if (chat.type === ChatType.DIRECT) {
-      throw new BadRequestException('Không thể thêm người tham gia vào chat trực tiếp');
+      throw new BadRequestException(
+        'Không thể thêm người tham gia vào chat trực tiếp',
+      );
     }
 
     const newParticipants = await this.usersRepository.findBy({
@@ -271,7 +277,9 @@ export class ChatService {
     // Check if user is a participant
     const isParticipant = message.chat.members.some((p) => p.id === userId);
     if (!isParticipant) {
-      throw new ForbiddenException('Bạn không phải là người tham gia trực tiếp');
+      throw new ForbiddenException(
+        'Bạn không phải là người tham gia trực tiếp',
+      );
     }
 
     const user = await this.usersRepository.findOne({ where: { id: userId } });

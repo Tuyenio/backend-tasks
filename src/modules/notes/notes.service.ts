@@ -143,7 +143,9 @@ export class NotesService {
 
     // Only creator can update the note
     if (note.createdBy.id !== userId) {
-      throw new ForbiddenException('Chỉ có người tạo mới có thể cập nhật ghi chú này');
+      throw new ForbiddenException(
+        'Chỉ có người tạo mới có thể cập nhật ghi chú này',
+      );
     }
 
     Object.assign(note, updateNoteDto);
@@ -155,7 +157,9 @@ export class NotesService {
 
     // Only creator can delete the note
     if (note.createdBy.id !== userId) {
-      throw new ForbiddenException('Chỉ có người tạo mới có thể xóa ghi chú này');
+      throw new ForbiddenException(
+        'Chỉ có người tạo mới có thể xóa ghi chú này',
+      );
     }
 
     await this.notesRepository.remove(note);
@@ -190,7 +194,9 @@ export class NotesService {
 
     // Only creator can pin/unpin
     if (note.createdBy.id !== userId) {
-      throw new ForbiddenException('Chỉ có người tạo mới có thể ghim/bỏ ghim ghi chú này');
+      throw new ForbiddenException(
+        'Chỉ có người tạo mới có thể ghim/bỏ ghim ghi chú này',
+      );
     }
 
     note.isPinned = !note.isPinned;
@@ -206,7 +212,9 @@ export class NotesService {
 
     // Only creator can share the note
     if (note.createdBy.id !== userId) {
-      throw new ForbiddenException('Chỉ có người tạo mới có thể chia sẻ ghi chú này');
+      throw new ForbiddenException(
+        'Chỉ có người tạo mới có thể chia sẻ ghi chú này',
+      );
     }
 
     const users = await this.usersRepository.findBy({
@@ -235,7 +243,9 @@ export class NotesService {
 
     // Only creator can unshare the note
     if (note.createdBy.id !== userId) {
-      throw new ForbiddenException('Chỉ có người tạo mới có thể bỏ chia sẻ ghi chú này');
+      throw new ForbiddenException(
+        'Chỉ có người tạo mới có thể bỏ chia sẻ ghi chú này',
+      );
     }
 
     note.sharedWith = note.sharedWith?.filter((u) => u.id !== sharedUserId);

@@ -39,7 +39,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
 
     if (!user || !user.isActive) {
-      throw new UnauthorizedException('Người dùng không tìm thấy hoặc vô hiệu hóa');
+      throw new UnauthorizedException(
+        'Người dùng không tìm thấy hoặc vô hiệu hóa',
+      );
     }
 
     if (user.isLocked) {

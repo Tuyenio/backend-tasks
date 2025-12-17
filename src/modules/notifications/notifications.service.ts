@@ -91,9 +91,7 @@ export class NotificationsService {
     }
 
     if (notification.user.id !== userId) {
-      throw new ForbiddenException(
-        'Bạn không có quyền truy cập thông báo này',
-      );
+      throw new ForbiddenException('Bạn không có quyền truy cập thông báo này');
     }
 
     return notification;

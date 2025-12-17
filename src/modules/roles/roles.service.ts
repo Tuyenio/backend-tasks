@@ -138,9 +138,7 @@ export class RolesService {
 
     // Check if role has users
     if (role.users && role.users.length > 0) {
-      throw new BadRequestException(
-        `Không thể xóa vai trò có người dùng gán`
-      );
+      throw new BadRequestException(`Không thể xóa vai trò có người dùng gán`);
     }
 
     await this.rolesRepository.remove(role);

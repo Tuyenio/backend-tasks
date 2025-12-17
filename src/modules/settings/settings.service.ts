@@ -72,7 +72,9 @@ export class SettingsService {
     const theme = await this.getThemeById(id);
 
     if (theme.createdBy.id !== userId) {
-      throw new BadRequestException('Bạn chỉ có thể cập nhật chủ đề của riêng mình');
+      throw new BadRequestException(
+        'Bạn chỉ có thể cập nhật chủ đề của riêng mình',
+      );
     }
 
     Object.assign(theme, updateDto);

@@ -203,7 +203,9 @@ export class TasksService {
     // Check if user is project member
     const isMember = project.members.some((m) => m.id === userId);
     if (!isMember) {
-      throw new ForbiddenException('Bạn không phải là thành viên của dự án này');
+      throw new ForbiddenException(
+        'Bạn không phải là thành viên của dự án này',
+      );
     }
 
     const task = this.tasksRepository.create({
@@ -676,7 +678,9 @@ export class TasksService {
     }
 
     if (comment.author.id !== userId) {
-      throw new ForbiddenException('Bạn chỉ có thể chỉnh sửa bình luận của riêng mình');
+      throw new ForbiddenException(
+        'Bạn chỉ có thể chỉnh sửa bình luận của riêng mình',
+      );
     }
 
     comment.content = dto.content;
@@ -698,7 +702,9 @@ export class TasksService {
     }
 
     if (comment.author.id !== userId) {
-      throw new ForbiddenException('Bạn chỉ có thể xóa bình luận của riêng mình');
+      throw new ForbiddenException(
+        'Bạn chỉ có thể xóa bình luận của riêng mình',
+      );
     }
 
     await this.commentsRepository.remove(comment);
@@ -760,7 +766,9 @@ export class TasksService {
     }
 
     if (reaction.user.id !== userId) {
-      throw new ForbiddenException('Bạn chỉ có thể xóa phản ứng của riêng mình');
+      throw new ForbiddenException(
+        'Bạn chỉ có thể xóa phản ứng của riêng mình',
+      );
     }
 
     await this.reactionsRepository.remove(reaction);
@@ -828,9 +836,7 @@ export class TasksService {
       !isTaskCreator &&
       !isTaskAssignee
     ) {
-      throw new ForbiddenException(
-        'Bạn không có quyền chỉnh sửa task này',
-      );
+      throw new ForbiddenException('Bạn không có quyền chỉnh sửa task này');
     }
   }
 
