@@ -231,12 +231,22 @@ export class AuthService {
     user.status = UserStatus.ONLINE;
     await this.usersRepository.save(user);
 
+    // Reload user with relations (important for formatting response)
+    const updatedUser = await this.usersRepository.findOne({
+      where: { id: user.id },
+      relations: ['roles'],
+    });
+
+    if (!updatedUser) {
+      throw new UnauthorizedException('Không thể tải thông tin người dùng');
+    }
+
     // Generate JWT token
-    const payload = { sub: user.id, email: user.email };
+    const payload = { sub: updatedUser.id, email: updatedUser.email };
     const accessToken = this.jwtService.sign(payload);
 
     // Format user response with permissions
-    const formattedUser = this.formatUserResponse(user);
+    const formattedUser = this.formatUserResponse(updatedUser);
 
     return {
       accessToken,
@@ -267,6 +277,16 @@ export class AuthService {
       user.lastLoginAt = new Date();
       user.status = UserStatus.ONLINE;
       await this.usersRepository.save(user);
+      
+      // Reload with relations to ensure we have roles for formatting
+      user = await this.usersRepository.findOne({
+        where: { id: user.id },
+        relations: ['roles'],
+      });
+
+      if (!user) {
+        throw new NotFoundException('Không tìm thấy người dùng');
+      }
     } else {
       // Create new user from Google profile
       const memberRole = await this.rolesRepository.findOne({
