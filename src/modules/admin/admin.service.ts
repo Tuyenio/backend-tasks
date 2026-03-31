@@ -1,11 +1,10 @@
 import {
   Injectable,
   NotFoundException,
-  ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, MoreThan } from 'typeorm';
+import { Repository, DeleteResult, In } from 'typeorm';
 import { SystemSetting } from '../../entities/system-setting.entity';
 import { ActivityLog } from '../../entities/activity-log.entity';
 import { User } from '../../entities/user.entity';
@@ -211,6 +210,8 @@ export class AdminService {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
+    type ActivityRaw = { date: string; count: string };
+
     const activities = await this.activityLogsRepository
       .createQueryBuilder('log')
       .select('DATE(log.createdAt)', 'date')
@@ -218,11 +219,11 @@ export class AdminService {
       .where('log.createdAt >= :startDate', { startDate })
       .groupBy('DATE(log.createdAt)')
       .orderBy('DATE(log.createdAt)', 'ASC')
-      .getRawMany();
+      .getRawMany<ActivityRaw>();
 
-    return activities.map((item) => ({
-      date: item.date,
-      count: parseInt(item.count),
+    return activities.map(({ date, count }) => ({
+      date,
+      count: Number.parseInt(count, 10),
     }));
   }
 
@@ -255,7 +256,7 @@ export class AdminService {
     try {
       await this.usersRepository.query('SELECT 1');
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -271,6 +272,13 @@ export class AdminService {
 
   // Top Users (by activity)
   async getTopUsers(limit: number = 10) {
+    type TopUserRaw = {
+      userId: string;
+      fullName: string;
+      email: string;
+      activityCount: string;
+    };
+
     const topUsers = await this.activityLogsRepository
       .createQueryBuilder('log')
       .select('log.userId', 'userId')
@@ -283,20 +291,20 @@ export class AdminService {
       .addGroupBy('user.email')
       .orderBy('COUNT(*)', 'DESC')
       .limit(limit)
-      .getRawMany();
+      .getRawMany<TopUserRaw>();
 
-    return topUsers.map((item) => ({
-      userId: item.userId,
-      fullName: item.fullName,
-      email: item.email,
-      activityCount: parseInt(item.activityCount),
+    return topUsers.map(({ userId, fullName, email, activityCount }) => ({
+      userId,
+      fullName,
+      email,
+      activityCount: Number.parseInt(activityCount, 10),
     }));
   }
 
   // Database Cleanup
   async performDatabaseCleanup() {
     const [deletedLogs, deletedSessions, deletedNotifications] =
-      await Promise.all([
+      await Promise.all<[number, unknown, DeleteResult]>([
         this.clearOldActivityLogs(90),
         this.usersRepository.query(
           'DELETE FROM user_sessions WHERE "lastActiveAt" < NOW() - INTERVAL \'30 days\'',
@@ -309,11 +317,31 @@ export class AdminService {
           .execute(),
       ]);
 
+    const deletedSessionsCount = this.extractAffectedCount(deletedSessions);
+    const deletedNotificationsCount =
+      'affected' in deletedNotifications &&
+      typeof deletedNotifications.affected === 'number'
+        ? deletedNotifications.affected
+        : 0;
+
     return {
       deletedActivityLogs: deletedLogs,
-      deletedSessions: deletedSessions[1] || 0,
-      deletedNotifications: deletedNotifications.affected || 0,
+      deletedSessions: deletedSessionsCount,
+      deletedNotifications: deletedNotificationsCount,
     };
+  }
+
+  private extractAffectedCount(result: unknown): number {
+    if (Array.isArray(result) && typeof result[1] === 'number') {
+      return result[1];
+    }
+
+    if (result && typeof result === 'object' && 'rowCount' in result) {
+      const rowCount = (result as { rowCount?: number }).rowCount;
+      return typeof rowCount === 'number' ? rowCount : 0;
+    }
+
+    return 0;
   }
 
   // User Management
@@ -355,15 +383,22 @@ export class AdminService {
     const [items, total] = await qb.getManyAndCount();
 
     // Remove sensitive data
-    const users = items.map(
-      ({
-        password,
-        verificationToken,
-        resetPasswordToken,
-        resetPasswordExpires,
-        ...user
-      }) => user,
-    );
+    const users = items.map((user) => {
+      const {
+        password: _password,
+        verificationToken: _verificationToken,
+        resetPasswordToken: _resetPasswordToken,
+        resetPasswordExpires: _resetPasswordExpires,
+        ...safeUser
+      } = user;
+
+      void _password;
+      void _verificationToken;
+      void _resetPasswordToken;
+      void _resetPasswordExpires;
+
+      return safeUser;
+    });
 
     return {
       items: users,
@@ -384,10 +419,13 @@ export class AdminService {
       throw new NotFoundException('Người dùng không tìm thấy');
     }
 
+    const roles: Role[] = Array.isArray(user.roles)
+      ? (user.roles as Role[])
+      : [];
+    user.roles = roles;
+
     // Cannot lock super_admin
-    const isSuperAdmin = user.roles?.some(
-      (role) => role.name === 'super_admin',
-    );
+    const isSuperAdmin = roles.some((role) => role.name === 'super_admin');
     if (isSuperAdmin) {
       throw new BadRequestException('Không thể khóa tài khoản super admin');
     }
@@ -418,7 +456,9 @@ export class AdminService {
     }
 
     // Fetch roles
-    const roles = await this.rolesRepository.findByIds(roleIds);
+    const roles = await this.rolesRepository.find({
+      where: { id: In(roleIds) },
+    });
 
     if (roles.length !== roleIds.length) {
       throw new NotFoundException('Một hoặc nhiều vai trò không tìm thấy');

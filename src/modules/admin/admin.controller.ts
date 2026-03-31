@@ -8,7 +8,6 @@ import {
   Param,
   Query,
   UseGuards,
-  ForbiddenException,
   Request,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
@@ -107,7 +106,16 @@ export class AdminController {
   // User Management
   @Get('users')
   @RequirePermissions('users.manage')
-  async getAllUsers(@Query() query: any) {
+  async getAllUsers(
+    @Query()
+    query?: {
+      status?: string;
+      role?: string;
+      search?: string;
+      page?: number;
+      limit?: number;
+    },
+  ) {
     return this.adminService.getAllUsers(query);
   }
 
@@ -115,7 +123,8 @@ export class AdminController {
   @RequirePermissions('users.manage')
   async lockUser(@Param('id') id: string) {
     const user = await this.adminService.lockUser(id);
-    const { password, ...result } = user;
+    const { password: _password, ...result } = user;
+    void _password;
     return result;
   }
 
@@ -123,7 +132,8 @@ export class AdminController {
   @RequirePermissions('users.manage')
   async unlockUser(@Param('id') id: string) {
     const user = await this.adminService.unlockUser(id);
-    const { password, ...result } = user;
+    const { password: _password, ...result } = user;
+    void _password;
     return result;
   }
 
@@ -134,7 +144,8 @@ export class AdminController {
     @Body('roleIds') roleIds: string[],
   ) {
     const user = await this.adminService.assignRolesToUser(id, roleIds);
-    const { password, ...result } = user;
+    const { password: _password, ...result } = user;
+    void _password;
     return result;
   }
 }

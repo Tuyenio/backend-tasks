@@ -33,7 +33,7 @@ export class User {
   name: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  avatarUrl: string;
+  avatarUrl: string | null;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
   phone: string;

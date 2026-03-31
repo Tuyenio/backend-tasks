@@ -21,6 +21,7 @@ import { ManageTagsDto } from './dto/manage-tags.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { RequirePermissions } from '../../common/decorators/permissions.decorator';
+import type { AuthenticatedRequest } from '../../common/types/authenticated-request.interface';
 
 @Controller('projects')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -54,13 +55,17 @@ export class ProjectsController {
   @Get(':id/activity-logs')
   @RequirePermissions('projects.view')
   getActivityLogs(@Param('id') id: string, @Query('limit') limit?: number) {
-    return this.projectsService.getActivityLogs(id, limit);
+    const parsedLimit = typeof limit === 'string' ? parseInt(limit, 10) : limit;
+    return this.projectsService.getActivityLogs(id, parsedLimit);
   }
 
   @Post()
   @RequirePermissions('projects.create')
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() createProjectDto: CreateProjectDto, @Request() req: any) {
+  create(
+    @Body() createProjectDto: CreateProjectDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
     return this.projectsService.create(createProjectDto, req.user.id);
   }
 
@@ -69,7 +74,7 @@ export class ProjectsController {
   update(
     @Param('id') id: string,
     @Body() updateProjectDto: UpdateProjectDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.projectsService.update(id, updateProjectDto, req.user.id);
   }
@@ -77,7 +82,7 @@ export class ProjectsController {
   @Delete(':id')
   @RequirePermissions('projects.delete')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id') id: string, @Request() req: any) {
+  remove(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.projectsService.remove(id, req.user.id);
   }
 
@@ -86,7 +91,7 @@ export class ProjectsController {
   addMembers(
     @Param('id') id: string,
     @Body() manageMembersDto: ManageMembersDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.projectsService.addMembers(
       id,
@@ -101,7 +106,7 @@ export class ProjectsController {
   removeMember(
     @Param('id') id: string,
     @Param('memberId') memberId: string,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.projectsService.removeMember(id, memberId, req.user.id);
   }
@@ -111,7 +116,7 @@ export class ProjectsController {
   addTags(
     @Param('id') id: string,
     @Body() manageTagsDto: ManageTagsDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.projectsService.addTags(id, manageTagsDto.tagIds, req.user.id);
   }
@@ -122,7 +127,7 @@ export class ProjectsController {
   removeTag(
     @Param('id') id: string,
     @Param('tagId') tagId: string,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.projectsService.removeTag(id, tagId, req.user.id);
   }

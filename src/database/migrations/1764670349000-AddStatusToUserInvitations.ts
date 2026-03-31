@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddStatusToUserInvitations1764670349000 implements MigrationInterface {

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { SendEmailDto } from './dto/send-email.dto';
 
 export interface EmailTemplate {
@@ -12,52 +13,73 @@ export interface EmailTemplate {
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  private transporter: nodemailer.Transporter;
+  private transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo>;
 
   constructor(private configService: ConfigService) {
     this.initializeTransporter();
   }
 
   private initializeTransporter() {
+    const port = Number(this.configService.get<number>('SMTP_PORT')) || 587;
+    const host =
+      this.configService.get<string>('SMTP_HOST') || 'smtp.ethereal.email';
+    const user = this.configService.get<string>('SMTP_USER') || '';
+    const pass = this.configService.get<string>('SMTP_PASS') || '';
+
     // For development, use ethereal.email or configure SMTP
-    this.transporter = nodemailer.createTransport({
-      host: this.configService.get('SMTP_HOST', 'smtp.ethereal.email'),
-      port: this.configService.get('SMTP_PORT', 587),
+    const transportOptions: SMTPTransport.Options = {
+      host,
+      port,
       secure: false,
       auth: {
-        user: this.configService.get('SMTP_USER', ''),
-        pass: this.configService.get('SMTP_PASS', ''),
+        user,
+        pass,
       },
-    });
+    };
+
+    this.transporter = nodemailer.createTransport<SMTPTransport.SentMessageInfo>(
+      transportOptions,
+    );
 
     // Verify connection
-    this.transporter.verify((error) => {
-      if (error) {
-        this.logger.error('SMTP connection failed:', error);
-      } else {
-        this.logger.log('SMTP server is ready to send emails');
+    this.transporter.verify((error: unknown) => {
+      if (error instanceof Error) {
+        this.logger.error('SMTP connection failed:', error.stack);
+        return;
       }
+
+      this.logger.log('SMTP server is ready to send emails');
     });
   }
 
   async sendEmail(dto: SendEmailDto) {
     try {
-      const info = await this.transporter.sendMail({
-        from: this.configService.get('SMTP_FROM', 'noreply@tasks.app'),
+      const info: unknown = await this.transporter.sendMail({
+        from:
+          this.configService.get<string>('SMTP_FROM') || 'noreply@tasks.app',
         to: dto.to,
         subject: dto.subject,
         text: dto.text,
         html: dto.html,
       });
 
-      this.logger.log(`Email sent: ${info.messageId}`);
+      if (!info || typeof info !== 'object' || !('messageId' in info)) {
+        throw new Error('Invalid mail response');
+      }
+
+      const messageInfo = info as SMTPTransport.SentMessageInfo;
+
+      this.logger.log(`Email sent: ${String(messageInfo.messageId)}`);
       return {
         success: true,
-        messageId: info.messageId,
-        previewUrl: nodemailer.getTestMessageUrl(info),
+        messageId: messageInfo.messageId,
+        previewUrl: nodemailer.getTestMessageUrl(messageInfo),
       };
     } catch (error) {
-      this.logger.error('Failed to send email:', error);
+      this.logger.error(
+        'Failed to send email:',
+        error instanceof Error ? error.stack : undefined,
+      );
       throw error;
     }
   }
@@ -424,7 +446,7 @@ export class EmailService {
     return this.sendEmail(dto);
   }
 
-  async getEmailStats() {
+  getEmailStats() {
     // Placeholder for email statistics
     return {
       sent: 0,

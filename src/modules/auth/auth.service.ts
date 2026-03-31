@@ -29,6 +29,19 @@ import { randomBytes } from 'crypto';
 import { EmailService } from '../email/email.service';
 import { ChatService } from '../chat/chat.service';
 
+type SafeUserResponse = Omit<
+  User,
+  | 'password'
+  | 'verificationToken'
+  | 'resetPasswordToken'
+  | 'resetPasswordExpires'
+  | 'roles'
+> & {
+  roles: string[];
+  permissions: string[];
+  avatarUrl?: string | null; // Made optional
+};
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -42,6 +55,7 @@ export class AuthService {
     private emailService: EmailService,
     private chatService: ChatService,
   ) {}
+
 
   /**
    * Aggregate all permissions from user's roles
@@ -102,27 +116,36 @@ export class AuthService {
   /**
    * Format user object for frontend
    */
-  private formatUserResponse(user: User) {
+  private formatUserResponse(user: User): SafeUserResponse {
     const {
-      password,
-      verificationToken,
-      resetPasswordToken,
-      resetPasswordExpires,
-      ...userWithoutSensitiveData
+      password: _password,
+      verificationToken: _verificationToken,
+      resetPasswordToken: _resetPasswordToken,
+      resetPasswordExpires: _resetPasswordExpires,
+      roles,
+      ...safeUser
     } = user;
 
-    // Extract role names
-    const roleNames = user.roles?.map((role) => role.name) || [];
+    void _password;
+    void _verificationToken;
+    void _resetPasswordToken;
+    void _resetPasswordExpires;
 
-    // Aggregate permissions
-    const permissions = this.aggregatePermissions(user.roles || []);
+    const roleNames = Array.isArray(roles)
+      ? (roles as Role[]).map((role) => role.name)
+      : [];
+    const permissions = Array.isArray(roles)
+      ? this.aggregatePermissions(roles as Role[])
+      : [];
 
-    return {
-      ...userWithoutSensitiveData,
+    const formatted: SafeUserResponse = {
+      ...safeUser,
       roles: roleNames,
       permissions,
-      avatarUrl: user.avatarUrl || null,
+      avatarUrl: user.avatarUrl ?? null,
     };
+
+    return formatted;
   }
 
   async register(registerDto: RegisterDto) {
@@ -169,9 +192,9 @@ export class AuthService {
     this.chatService
       .ensureDirectChatsForUser(user.id)
       .catch((error) =>
-        console.error(
-          `Failed to create direct chats for user ${user.id}:`,
-          error,
+        this.logger.error(
+          `Failed to create direct chats for user ${user.id}`,
+          error instanceof Error ? error.stack : undefined,
         ),
       );
 
@@ -183,7 +206,10 @@ export class AuthService {
         user.name,
       );
     } catch (error) {
-      console.error('Failed to send verification email:', error);
+      this.logger.error(
+        'Failed to send verification email',
+        error instanceof Error ? error.stack : undefined,
+      );
       // Don't fail registration if email fails
     }
 
@@ -277,7 +303,7 @@ export class AuthService {
       user.lastLoginAt = new Date();
       user.status = UserStatus.ONLINE;
       await this.usersRepository.save(user);
-      
+
       // Reload with relations to ensure we have roles for formatting
       user = await this.usersRepository.findOne({
         where: { id: user.id },
@@ -641,7 +667,7 @@ export class AuthService {
 
   async verifyInviteToken(token: string) {
     try {
-      const payload = this.jwtService.verify(token);
+      const payload = this.jwtService.verify<{ type?: string }>(token);
 
       if (payload.type !== 'invite') {
         throw new BadRequestException('Loại mã không hợp lệ');
@@ -688,8 +714,8 @@ export class AuthService {
           displayName: r.displayName,
         })),
       };
-    } catch (error) {
-      if (error.name === 'TokenExpiredError') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'TokenExpiredError') {
         throw new BadRequestException('Token lời mời đã hết hạn');
       }
       throw error;

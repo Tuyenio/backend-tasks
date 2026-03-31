@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddUserIdAndProjectIdToActivityLogs1764646517808 implements MigrationInterface {

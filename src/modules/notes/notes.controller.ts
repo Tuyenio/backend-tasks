@@ -18,6 +18,7 @@ import { ShareNoteDto } from './dto/share-note.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { RequirePermissions } from '../../common/decorators/permissions.decorator';
+import type { AuthenticatedRequest } from '../../common/types/authenticated-request.interface';
 
 @Controller('notes')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -26,25 +27,28 @@ export class NotesController {
 
   @Post()
   @RequirePermissions('notes.create')
-  create(@Body() createNoteDto: CreateNoteDto, @Request() req) {
+  create(
+    @Body() createNoteDto: CreateNoteDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
     return this.notesService.create(createNoteDto, req.user.id);
   }
 
   @Get()
   @RequirePermissions('notes.view')
-  findAll(@Query() query: QueryNoteDto, @Request() req) {
+  findAll(@Query() query: QueryNoteDto, @Request() req: AuthenticatedRequest) {
     return this.notesService.findAll(query, req.user.id);
   }
 
   @Get('statistics')
   @RequirePermissions('notes.view')
-  getStatistics(@Request() req) {
+  getStatistics(@Request() req: AuthenticatedRequest) {
     return this.notesService.getStatistics(req.user.id);
   }
 
   @Get(':id')
   @RequirePermissions('notes.view')
-  findOne(@Param('id') id: string, @Request() req) {
+  findOne(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.notesService.findOne(id, req.user.id);
   }
 
@@ -53,26 +57,26 @@ export class NotesController {
   update(
     @Param('id') id: string,
     @Body() updateNoteDto: UpdateNoteDto,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.notesService.update(id, updateNoteDto, req.user.id);
   }
 
   @Delete(':id')
   @RequirePermissions('notes.delete')
-  remove(@Param('id') id: string, @Request() req) {
+  remove(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.notesService.remove(id, req.user.id);
   }
 
   @Post(':id/duplicate')
   @RequirePermissions('notes.create')
-  duplicate(@Param('id') id: string, @Request() req) {
+  duplicate(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.notesService.duplicate(id, req.user.id);
   }
 
   @Patch(':id/toggle-pin')
   @RequirePermissions('notes.update')
-  togglePin(@Param('id') id: string, @Request() req) {
+  togglePin(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.notesService.togglePin(id, req.user.id);
   }
 
@@ -81,7 +85,7 @@ export class NotesController {
   shareNote(
     @Param('id') id: string,
     @Body() shareNoteDto: ShareNoteDto,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.notesService.shareNote(id, shareNoteDto, req.user.id);
   }
@@ -91,7 +95,7 @@ export class NotesController {
   unshareNote(
     @Param('id') id: string,
     @Param('sharedUserId') sharedUserId: string,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.notesService.unshareNote(id, sharedUserId, req.user.id);
   }
@@ -101,7 +105,7 @@ export class NotesController {
   addTag(
     @Param('id') id: string,
     @Param('tagId') tagId: string,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.notesService.addTag(id, tagId, req.user.id);
   }
@@ -111,7 +115,7 @@ export class NotesController {
   removeTag(
     @Param('id') id: string,
     @Param('tagId') tagId: string,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.notesService.removeTag(id, tagId, req.user.id);
   }

@@ -4,9 +4,11 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
+import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { Notification } from '../../entities/notification.entity';
+import type { JwtPayload } from '../auth/strategies/jwt.strategy';
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -25,32 +27,43 @@ export class NotificationsGateway
   server: Server;
 
   private connectedUsers: Map<string, string> = new Map(); // userId -> socketId
+  private readonly logger = new Logger(NotificationsGateway.name);
 
   constructor(private readonly jwtService: JwtService) {}
 
   async handleConnection(client: AuthenticatedSocket) {
     try {
-      const token =
-        client.handshake.auth.token ||
-        client.handshake.headers.authorization?.split(' ')[1];
+      const auth = client.handshake.auth as Record<string, unknown> | undefined;
+      const authToken =
+        auth && typeof auth.token === 'string' ? auth.token : undefined;
+      const headerToken = client.handshake.headers.authorization;
+
+      const tokenFromAuth = authToken;
+      const tokenFromHeader =
+        typeof headerToken === 'string' ? headerToken.split(' ')[1] : undefined;
+
+      const token: string | undefined = tokenFromAuth ?? tokenFromHeader;
 
       if (!token) {
         client.disconnect();
         return;
       }
 
-      const payload = await this.jwtService.verifyAsync(token);
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
       client.userId = payload.sub;
 
       if (client.userId) {
         this.connectedUsers.set(client.userId, client.id);
       }
 
-      console.log(
+      this.logger.log(
         `Notification client connected: ${client.id}, User: ${client.userId}`,
       );
     } catch (error) {
-      console.error('Notification connection error:', error);
+      this.logger.error(
+        'Notification connection error',
+        error instanceof Error ? error.stack : undefined,
+      );
       client.disconnect();
     }
   }
@@ -58,7 +71,7 @@ export class NotificationsGateway
   handleDisconnect(client: AuthenticatedSocket) {
     if (client.userId) {
       this.connectedUsers.delete(client.userId);
-      console.log(
+      this.logger.log(
         `Notification client disconnected: ${client.id}, User: ${client.userId}`,
       );
     }

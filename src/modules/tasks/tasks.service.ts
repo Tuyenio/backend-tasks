@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, LessThan, MoreThanOrEqual, Between } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Task, TaskStatus } from '../../entities/task.entity';
 import { Project } from '../../entities/project.entity';
 import { User } from '../../entities/user.entity';

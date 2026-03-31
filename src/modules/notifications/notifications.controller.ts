@@ -17,6 +17,7 @@ import { QueryNotificationDto } from './dto/query-notification.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { RequirePermissions } from '../../common/decorators/permissions.decorator';
+import type { AuthenticatedRequest } from '../../common/types/authenticated-request.interface';
 
 @Controller('notifications')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -77,27 +78,33 @@ export class NotificationsController {
 
   @Get()
   @RequirePermissions('notifications.view')
-  findAll(@Query() query: QueryNotificationDto, @Request() req) {
+  findAll(
+    @Query() query: QueryNotificationDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
     return this.notificationsService.findAll(query, req.user.id);
   }
 
   @Get('unread-count')
-  getUnreadCount(@Request() req) {
+  getUnreadCount(@Request() req: AuthenticatedRequest) {
     return this.notificationsService.getUnreadCount(req.user.id);
   }
 
   @Get('statistics')
-  getStatistics(@Request() req) {
+  getStatistics(@Request() req: AuthenticatedRequest) {
     return this.notificationsService.getStatistics(req.user.id);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string, @Request() req) {
+  findOne(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.notificationsService.findOne(id, req.user.id);
   }
 
   @Patch(':id/read')
-  async markAsRead(@Param('id') id: string, @Request() req) {
+  async markAsRead(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
     const notification = await this.notificationsService.markAsRead(
       id,
       req.user.id,
@@ -113,7 +120,7 @@ export class NotificationsController {
   }
 
   @Patch('read-all')
-  async markAllAsRead(@Request() req) {
+  async markAllAsRead(@Request() req: AuthenticatedRequest) {
     await this.notificationsService.markAllAsRead(req.user.id);
 
     // Update unread count to 0
@@ -123,7 +130,10 @@ export class NotificationsController {
   }
 
   @Patch('read-multiple')
-  async markMultipleAsRead(@Body() body: { ids: string[] }, @Request() req) {
+  async markMultipleAsRead(
+    @Body() body: { ids: string[] },
+    @Request() req: AuthenticatedRequest,
+  ) {
     const notifications = await this.notificationsService.markMultipleAsRead(
       body.ids,
       req.user.id,
@@ -139,7 +149,7 @@ export class NotificationsController {
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string, @Request() req) {
+  async remove(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     await this.notificationsService.remove(id, req.user.id);
 
     // Update unread count
@@ -152,7 +162,7 @@ export class NotificationsController {
   }
 
   @Delete()
-  async removeAll(@Request() req) {
+  async removeAll(@Request() req: AuthenticatedRequest) {
     await this.notificationsService.removeAll(req.user.id);
 
     // Update unread count to 0

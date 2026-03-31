@@ -156,14 +156,14 @@ export class NotificationsService {
       .addSelect('COUNT(*)', 'count')
       .where('notification.userId = :userId', { userId })
       .groupBy('notification.type')
-      .getRawMany();
+      .getRawMany<{ type: string; count: string }>();
 
     return {
       total,
       unread,
       read: total - unread,
-      byType: byType.reduce((acc, item) => {
-        acc[item.type] = parseInt(item.count);
+      byType: byType.reduce<Record<string, number>>((acc, item) => {
+        acc[item.type] = Number.parseInt(item.count, 10);
         return acc;
       }, {}),
     };

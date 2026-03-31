@@ -37,11 +37,9 @@ export class ChatService {
     // Validate participants
     const allParticipantIds = [...createChatDto.participantIds, userId];
     const uniqueParticipantIds = [...new Set(allParticipantIds)];
+    const chatType = createChatDto.type as ChatType;
 
-    if (
-      createChatDto.type === ChatType.DIRECT &&
-      uniqueParticipantIds.length !== 2
-    ) {
+    if (chatType === ChatType.DIRECT && uniqueParticipantIds.length !== 2) {
       throw new BadRequestException(
         'Chat trực tiếp phải có đúng 2 người tham gia',
       );
@@ -58,7 +56,7 @@ export class ChatService {
     }
 
     // Check if direct chat already exists
-    if (createChatDto.type === ChatType.DIRECT) {
+    if (chatType === ChatType.DIRECT) {
       const existingChat = await this.chatsRepository
         .createQueryBuilder('chat')
         .leftJoin('chat.participants', 'participant')
@@ -97,8 +95,12 @@ export class ChatService {
       qb.andWhere('chat.name ILIKE :search', { search: `%${search}%` });
     }
 
-    if (type) {
-      qb.andWhere('chat.type = :type', { type });
+    const normalizedType = Object.values(ChatType).includes(type as ChatType)
+      ? (type as ChatType)
+      : undefined;
+
+    if (normalizedType) {
+      qb.andWhere('chat.type = :type', { type: normalizedType });
     }
 
     qb.orderBy('chat.createdAt', 'DESC')

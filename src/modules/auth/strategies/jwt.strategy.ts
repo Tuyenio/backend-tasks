@@ -1,10 +1,11 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Repository } from 'typeorm';
 import { User } from '../../../entities/user.entity';
+import type { Role } from '../../../entities/role.entity';
 
 export interface JwtPayload {
   sub: string;
@@ -15,6 +16,8 @@ export interface JwtPayload {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
+  private readonly logger = new Logger(JwtStrategy.name);
+
   constructor(
     private configService: ConfigService,
     @InjectRepository(User)
@@ -48,15 +51,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Tài khoản đã bị khóa');
     }
 
-    // DEBUG: Log user roles and permissions
-    console.log('🔍 JWT Validate - User:', user.email);
-    console.log(
-      '🔍 JWT Validate - Roles:',
-      user.roles?.map((r) => ({ name: r.name, permissions: r.permissions })),
-    );
-
     // Ensure roles are loaded with permissions (simple-array is auto-loaded)
     // This is needed for PermissionsGuard to work properly
-    return user;
+    const userRoles = Array.isArray(user.roles) ? (user.roles as Role[]) : [];
+    this.logger.debug(
+      `JWT validated for user ${user.email} with roles: ${userRoles
+        .map((r) => r.name)
+        .join(', ')}`,
+    );
+    return { ...user, roles: userRoles };
   }
 }

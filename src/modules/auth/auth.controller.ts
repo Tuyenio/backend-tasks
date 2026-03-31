@@ -7,7 +7,6 @@ import {
   Request,
   HttpCode,
   HttpStatus,
-  Param,
   Query,
   Res,
 } from '@nestjs/common';
@@ -28,6 +27,10 @@ import {
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { RequirePermissions } from '../../common/decorators/permissions.decorator';
+import type {
+  AuthenticatedRequest,
+  GoogleAuthRequest,
+} from '../../common/types/authenticated-request.interface';
 
 @Controller('auth')
 export class AuthController {
@@ -70,7 +73,7 @@ export class AuthController {
   @Post('change-password')
   @HttpCode(HttpStatus.OK)
   async changePassword(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Body() changePasswordDto: ChangePasswordDto,
   ) {
     return this.authService.changePassword(req.user.id, changePasswordDto);
@@ -78,13 +81,13 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  async getProfile(@Request() req) {
+  async getProfile(@Request() req: AuthenticatedRequest) {
     return this.authService.getProfile(req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('test-jwt')
-  async testJwt(@Request() req) {
+  testJwt(@Request() req: AuthenticatedRequest) {
     const user = req.user;
     return {
       success: true,
@@ -109,14 +112,14 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refreshToken(@Request() req) {
+  async refreshToken(@Request() req: AuthenticatedRequest) {
     return this.authService.refreshToken(req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout() {
+  logout() {
     // Token invalidation would be handled by a token blacklist or session management
     return { message: 'Logged out successfully' };
   }
@@ -125,7 +128,10 @@ export class AuthController {
   @RequirePermissions('users.invite')
   @Post('invite')
   @HttpCode(HttpStatus.OK)
-  async inviteUser(@Body() inviteUserDto: InviteUserDto, @Request() req) {
+  async inviteUser(
+    @Body() inviteUserDto: InviteUserDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
     return this.authService.inviteUser(inviteUserDto, req.user.id);
   }
 
@@ -144,13 +150,13 @@ export class AuthController {
   // Google OAuth routes
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  async googleAuth() {
+  googleAuth() {
     // Initiates the Google OAuth flow
   }
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  async googleAuthCallback(@Request() req, @Res() res: Response) {
+  googleAuthCallback(@Request() req: GoogleAuthRequest, @Res() res: Response) {
     // User data from Google Strategy
     const { accessToken, user } = req.user;
 

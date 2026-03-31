@@ -8,7 +8,6 @@ import {
   OneToMany,
   ManyToMany,
   JoinTable,
-  Index,
 } from 'typeorm';
 import { User } from './user.entity';
 

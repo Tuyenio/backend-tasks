@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddThemesAndUserSettings1764654000000 implements MigrationInterface {

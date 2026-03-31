@@ -14,7 +14,7 @@ export class EmailController {
   }
 
   @Get('stats')
-  async getEmailStats() {
+  getEmailStats() {
     return this.emailService.getEmailStats();
   }
 }

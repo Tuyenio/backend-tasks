@@ -4,6 +4,7 @@ import { User } from '../../entities/user.entity';
 import { Tag } from '../../entities/tag.entity';
 import { Project } from '../../entities/project.entity';
 import { Task, TaskStatus, TaskPriority } from '../../entities/task.entity';
+import { ProjectStatus } from '../../entities/project.entity';
 import { Note } from '../../entities/note.entity';
 import { Chat, ChatType } from '../../entities/chat.entity';
 import { Message, MessageType } from '../../entities/message.entity';
@@ -350,7 +351,7 @@ async function seed() {
         description:
           'Thiết kế lại toàn bộ giao diện website công ty với UI/UX hiện đại',
         color: '#3b82f6',
-        status: 'active' as const,
+        status: ProjectStatus.ACTIVE,
         progress: 65,
         startDate: new Date('2024-01-01'),
         deadline: new Date('2024-12-31'),
@@ -362,7 +363,7 @@ async function seed() {
         name: 'Mobile App Development',
         description: 'Phát triển ứng dụng di động iOS và Android',
         color: '#10b981',
-        status: 'active' as const,
+        status: ProjectStatus.ACTIVE,
         progress: 40,
         startDate: new Date('2024-02-01'),
         deadline: new Date('2025-03-31'),
@@ -374,7 +375,7 @@ async function seed() {
         name: 'Marketing Campaign Q4',
         description: 'Chiến dịch marketing quý 4 năm 2024',
         color: '#f59e0b',
-        status: 'completed' as const,
+        status: ProjectStatus.COMPLETED,
         progress: 100,
         startDate: new Date('2024-10-01'),
         endDate: new Date('2024-12-31'),
@@ -387,7 +388,7 @@ async function seed() {
         name: 'Blog Platform',
         description: 'Xây dựng nền tảng blog với CMS tích hợp',
         color: '#8b5cf6',
-        status: 'active' as const,
+        status: ProjectStatus.ACTIVE,
         progress: 30,
         startDate: new Date('2024-12-01'),
         deadline: new Date('2025-06-30'),
@@ -399,7 +400,7 @@ async function seed() {
         name: 'E-commerce Platform',
         description: 'Xây dựng nền tảng thương mại điện tử đầy đủ',
         color: '#ec4899',
-        status: 'active' as const,
+        status: ProjectStatus.ACTIVE,
         progress: 50,
         startDate: new Date('2024-10-01'),
         deadline: new Date('2025-08-31'),
@@ -411,7 +412,7 @@ async function seed() {
         name: 'Data Analytics Dashboard',
         description: 'Tạo dashboard phân tích dữ liệu realtime',
         color: '#06b6d4',
-        status: 'active' as const,
+        status: ProjectStatus.ACTIVE,
         progress: 25,
         startDate: new Date('2024-11-15'),
         deadline: new Date('2025-05-31'),
@@ -423,7 +424,7 @@ async function seed() {
         name: 'AI Chatbot Integration',
         description: 'Tích hợp AI chatbot sử dụng GPT-4 cho customer support',
         color: '#a855f7',
-        status: 'active' as const,
+        status: ProjectStatus.ACTIVE,
         progress: 20,
         startDate: new Date('2024-11-01'),
         deadline: new Date('2025-04-30'),
@@ -435,7 +436,7 @@ async function seed() {
         name: 'IoT Smart Home System',
         description: 'Hệ thống quản lý nhà thông minh kết nối IoT devices',
         color: '#22c55e',
-        status: 'active' as const,
+        status: ProjectStatus.ACTIVE,
         progress: 35,
         startDate: new Date('2024-09-15'),
         deadline: new Date('2025-07-31'),
@@ -447,7 +448,7 @@ async function seed() {
         name: 'Cloud Migration AWS',
         description: 'Di chuyển toàn bộ infrastructure sang AWS cloud',
         color: '#f59e0b',
-        status: 'active' as const,
+        status: ProjectStatus.ACTIVE,
         progress: 55,
         startDate: new Date('2024-08-01'),
         deadline: new Date('2025-02-28'),
@@ -459,7 +460,7 @@ async function seed() {
         name: 'Data Warehouse Implementation',
         description: 'Xây dựng data warehouse với BigQuery và ETL pipelines',
         color: '#0ea5e9',
-        status: 'active' as const,
+        status: ProjectStatus.ACTIVE,
         progress: 45,
         startDate: new Date('2024-10-15'),
         deadline: new Date('2025-06-30'),
@@ -472,7 +473,7 @@ async function seed() {
         description:
           'Nâng cấp hệ thống CRM với tính năng automation và AI insights',
         color: '#ec4899',
-        status: 'active' as const,
+        status: ProjectStatus.ACTIVE,
         progress: 60,
         startDate: new Date('2024-07-01'),
         deadline: new Date('2025-01-31'),
@@ -485,7 +486,7 @@ async function seed() {
         description:
           'Triển khai hệ thống ERP cho quản lý toàn diện doanh nghiệp',
         color: '#8b5cf6',
-        status: 'active' as const,
+        status: ProjectStatus.ACTIVE,
         progress: 30,
         startDate: new Date('2024-09-01'),
         deadline: new Date('2025-12-31'),
@@ -497,7 +498,7 @@ async function seed() {
         name: 'Blockchain DeFi Platform',
         description: 'Xây dựng nền tảng DeFi trên Ethereum với smart contracts',
         color: '#14b8a6',
-        status: 'active' as const,
+        status: ProjectStatus.ACTIVE,
         progress: 15,
         startDate: new Date('2024-11-20'),
         deadline: new Date('2025-09-30'),
@@ -509,7 +510,7 @@ async function seed() {
         name: 'Gaming Platform Development',
         description: 'Phát triển nền tảng game online multiplayer với Unity',
         color: '#f43f5e',
-        status: 'active' as const,
+        status: ProjectStatus.ACTIVE,
         progress: 40,
         startDate: new Date('2024-08-15'),
         deadline: new Date('2025-10-31'),
@@ -521,7 +522,7 @@ async function seed() {
         name: 'Healthcare Management System',
         description: 'Hệ thống quản lý bệnh viện với EMR và telemedicine',
         color: '#10b981',
-        status: 'active' as const,
+        status: ProjectStatus.ACTIVE,
         progress: 50,
         startDate: new Date('2024-06-01'),
         deadline: new Date('2025-05-31'),
@@ -534,7 +535,7 @@ async function seed() {
         description:
           'Dashboard tài chính với Business Intelligence và real-time analytics',
         color: '#3b82f6',
-        status: 'active' as const,
+        status: ProjectStatus.ACTIVE,
         progress: 70,
         startDate: new Date('2024-05-01'),
         deadline: new Date('2025-01-15'),
@@ -547,7 +548,7 @@ async function seed() {
         description:
           'Cổng thanh toán di động tích hợp multiple payment methods',
         color: '#f59e0b',
-        status: 'completed' as const,
+        status: ProjectStatus.COMPLETED,
         progress: 100,
         startDate: new Date('2024-03-01'),
         endDate: new Date('2024-11-30'),
@@ -562,7 +563,6 @@ async function seed() {
     for (const projectData of projectsData) {
       const project = projectRepository.create({
         ...projectData,
-        status: projectData.status as any,
       });
       await projectRepository.save(project);
       projects.push(project);

@@ -7,11 +7,12 @@ import {
   ConnectedSocket,
   MessageBody,
 } from '@nestjs/websockets';
+import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
-import { UseGuards } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ChatService } from './chat.service';
 import { CreateMessageDto } from './dto/create-message.dto';
+import type { JwtPayload } from '../auth/strategies/jwt.strategy';
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -28,6 +29,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
 
   private connectedUsers: Map<string, string> = new Map(); // userId -> socketId
+  private readonly logger = new Logger(ChatGateway.name);
 
   constructor(
     private readonly chatService: ChatService,
@@ -36,16 +38,23 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: AuthenticatedSocket) {
     try {
-      const token =
-        client.handshake.auth.token ||
-        client.handshake.headers.authorization?.split(' ')[1];
+      const auth = client.handshake.auth as Record<string, unknown> | undefined;
+      const authToken =
+        auth && typeof auth.token === 'string' ? auth.token : undefined;
+      const headerToken = client.handshake.headers.authorization;
+
+      const tokenFromAuth = authToken;
+      const tokenFromHeader =
+        typeof headerToken === 'string' ? headerToken.split(' ')[1] : undefined;
+
+      const token: string | undefined = tokenFromAuth ?? tokenFromHeader;
 
       if (!token) {
         client.disconnect();
         return;
       }
 
-      const payload = await this.jwtService.verifyAsync(token);
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
       client.userId = payload.sub;
 
       if (client.userId) {
@@ -54,10 +63,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Notify others that user is online
       this.server.emit('user:online', { userId: client.userId });
-
-      console.log(`Client connected: ${client.id}, User: ${client.userId}`);
+      this.logger.log(`Client connected: ${client.id}, User: ${client.userId}`);
     } catch (error) {
-      console.error('Connection error:', error);
+      this.logger.error(
+        'Connection error',
+        error instanceof Error ? error.stack : undefined,
+      );
       client.disconnect();
     }
   }
@@ -68,8 +79,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Notify others that user is offline
       this.server.emit('user:offline', { userId: client.userId });
-
-      console.log(`Client disconnected: ${client.id}, User: ${client.userId}`);
+      this.logger.log(
+        `Client disconnected: ${client.id}, User: ${client.userId}`,
+      );
     }
   }
 
@@ -98,7 +110,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       return message;
     } catch (error) {
-      return { error: error.message };
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { error: message };
     }
   }
 
@@ -127,7 +140,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
       });
     } catch (error) {
-      console.error('Typing start error:', error);
+      this.logger.error(
+        'Typing start error',
+        error instanceof Error ? error.stack : undefined,
+      );
     }
   }
 
@@ -156,7 +172,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
       });
     } catch (error) {
-      console.error('Typing stop error:', error);
+      this.logger.error(
+        'Typing stop error',
+        error instanceof Error ? error.stack : undefined,
+      );
     }
   }
 
@@ -186,7 +205,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       return message;
     } catch (error) {
-      return { error: error.message };
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { error: message };
     }
   }
 

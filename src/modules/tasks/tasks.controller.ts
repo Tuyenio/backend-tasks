@@ -27,6 +27,7 @@ import { AddReactionDto } from './dto/add-reaction.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { RequirePermissions } from '../../common/decorators/permissions.decorator';
+import type { AuthenticatedRequest } from '../../common/types/authenticated-request.interface';
 
 @Controller('tasks')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -60,7 +61,10 @@ export class TasksController {
   @Post()
   @RequirePermissions('tasks.create')
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() createTaskDto: CreateTaskDto, @Request() req: any) {
+  create(
+    @Body() createTaskDto: CreateTaskDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
     return this.tasksService.create(createTaskDto, req.user.id);
   }
 
@@ -69,7 +73,7 @@ export class TasksController {
   update(
     @Param('id') id: string,
     @Body() updateTaskDto: UpdateTaskDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.tasksService.update(id, updateTaskDto, req.user.id);
   }
@@ -77,7 +81,7 @@ export class TasksController {
   @Delete(':id')
   @RequirePermissions('tasks.delete')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id') id: string, @Request() req: any) {
+  remove(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     return this.tasksService.remove(id, req.user.id);
   }
 
@@ -87,7 +91,7 @@ export class TasksController {
   assignUsers(
     @Param('id') id: string,
     @Body() assignTaskDto: AssignTaskDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.tasksService.assignUsers(
       id,
@@ -102,7 +106,7 @@ export class TasksController {
   removeAssignee(
     @Param('id') id: string,
     @Param('assigneeId') assigneeId: string,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.tasksService.removeAssignee(id, assigneeId, req.user.id);
   }
@@ -113,7 +117,7 @@ export class TasksController {
   addTags(
     @Param('id') id: string,
     @Body('tagIds') tagIds: string[],
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.tasksService.addTags(id, tagIds, req.user.id);
   }
@@ -124,7 +128,7 @@ export class TasksController {
   removeTag(
     @Param('id') id: string,
     @Param('tagId') tagId: string,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.tasksService.removeTag(id, tagId, req.user.id);
   }
@@ -136,7 +140,7 @@ export class TasksController {
   addChecklistItem(
     @Param('id') id: string,
     @Body() dto: CreateChecklistItemDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.tasksService.addChecklistItem(id, dto, req.user.id);
   }
@@ -147,7 +151,7 @@ export class TasksController {
     @Param('id') id: string,
     @Param('itemId') itemId: string,
     @Body() dto: UpdateChecklistItemDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.tasksService.updateChecklistItem(id, itemId, dto, req.user.id);
   }
@@ -158,7 +162,7 @@ export class TasksController {
   removeChecklistItem(
     @Param('id') id: string,
     @Param('itemId') itemId: string,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.tasksService.removeChecklistItem(id, itemId, req.user.id);
   }
@@ -170,7 +174,7 @@ export class TasksController {
   addReminder(
     @Param('id') id: string,
     @Body() dto: CreateReminderDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.tasksService.addReminder(id, dto, req.user.id);
   }
@@ -181,7 +185,7 @@ export class TasksController {
   removeReminder(
     @Param('id') id: string,
     @Param('reminderId') reminderId: string,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.tasksService.removeReminder(id, reminderId, req.user.id);
   }
@@ -199,7 +203,7 @@ export class TasksController {
   addComment(
     @Param('id') id: string,
     @Body() dto: CreateCommentDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.tasksService.addComment(id, dto, req.user.id);
   }
@@ -210,7 +214,7 @@ export class TasksController {
     @Param('id') id: string,
     @Param('commentId') commentId: string,
     @Body() dto: UpdateCommentDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.tasksService.updateComment(id, commentId, dto, req.user.id);
   }
@@ -221,7 +225,7 @@ export class TasksController {
   removeComment(
     @Param('id') id: string,
     @Param('commentId') commentId: string,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.tasksService.removeComment(id, commentId, req.user.id);
   }
@@ -233,7 +237,7 @@ export class TasksController {
   addReaction(
     @Param('commentId') commentId: string,
     @Body() dto: AddReactionDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.tasksService.addReaction(commentId, dto.emoji, req.user.id);
   }
@@ -244,7 +248,7 @@ export class TasksController {
   removeReaction(
     @Param('commentId') commentId: string,
     @Param('reactionId') reactionId: string,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.tasksService.removeReaction(commentId, reactionId, req.user.id);
   }
