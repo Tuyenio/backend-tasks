@@ -54,9 +54,13 @@ export class EmailService {
 
   async sendEmail(dto: SendEmailDto) {
     try {
+      const fromAddress =
+        this.configService.get<string>('SMTP_FROM') ||
+        this.configService.get<string>('MAIL_FROM') ||
+        'noreply@tasks.app';
+
       const info: unknown = await this.transporter.sendMail({
-        from:
-          this.configService.get<string>('SMTP_FROM') || 'noreply@tasks.app',
+        from: fromAddress,
         to: dto.to,
         subject: dto.subject,
         text: dto.text,

@@ -12,9 +12,19 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
 
-  // Enable CORS for frontend
+  // Enable CORS for frontend (supports multiple comma-separated origins)
+  const corsOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      if (!origin || corsOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

@@ -23,6 +23,14 @@ class EnvironmentVariables {
   PORT: number = 3001;
 
   @IsString()
+  @IsOptional()
+  APP_URL: string = 'http://localhost:3000';
+
+  @IsString()
+  @IsOptional()
+  FRONTEND_URL: string = 'http://localhost:3000';
+
+  @IsString()
   DB_HOST: string;
 
   @IsNumber()
@@ -49,8 +57,30 @@ class EnvironmentVariables {
   JWT_SECRET: string;
 
   @IsString()
+  GOOGLE_CLIENT_ID: string;
+
+  @IsString()
+  GOOGLE_CLIENT_SECRET: string;
+
+  @IsString()
+  GOOGLE_CALLBACK_URL: string;
+
+  @IsString()
+  SMTP_HOST: string;
+
+  @IsNumber()
+  SMTP_PORT: number;
+
+  @IsString()
+  SMTP_USER: string;
+
+  @IsString()
+  SMTP_PASS: string;
+
+  @IsString()
   @IsOptional()
-  FRONTEND_URL: string = 'http://localhost:3000';
+  SMTP_FROM?: string;
+
 }
 
 export function validate(config: Record<string, unknown>) {
